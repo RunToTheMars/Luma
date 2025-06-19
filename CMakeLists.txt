@@ -14,6 +14,7 @@ add_subdirectory(src/GL/glew)
 add_subdirectory(src/GL/GLASCII)
 add_subdirectory(src/GL/GLShaderProgram)
 add_subdirectory(src/GL/GLWindow)
+add_subdirectory(src/GL/Geometry)
 
 add_executable(hello_world src/HelloWorld/main.cpp)
 target_link_libraries(hello_world
