@@ -5,7 +5,8 @@ project(SIGNAL
         DESCRIPTION "Signal"
         LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 17)          # Версия стандарта С++
+
+set(CMAKE_CXX_STANDARD 20)          # Версия стандарта С++
 set(CMAKE_CXX_STANDARD_REQUIRED ON) # Обязательно ли использовать именно этот стандарт, или можно выше.
 
 #include_directories (include)

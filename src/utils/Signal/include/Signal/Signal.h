@@ -5,84 +5,117 @@
 
 namespace utils
 {
-
 template<typename... Args>
-class signal
+class Signal
 {
 public:
-  class connection
+  using Handler = std::function<void (Args...)>;
+
+  class TemporaryDisconnector;
+  class Connection
   {
   public:
-    connection (const connection &) = delete;
-    connection (connection &&);
-    ~connection () { disconnect (); }
-
-    connection &operator= (const connection &) = delete;
-    connection &operator= (connection &&);
-
-    bool connected () const { return m_connected; }
-    bool disconnected () const { return !connected (); }
-
-    void disconnect ()
+    Connection (const Connection &) = delete;
+    Connection (Connection &&) = default;
+    ~Connection ()
     {
-      if (disconnected ())
-        return;
+      if (m_signal)
+        std::erase (m_signal->m_connections, this);
+    }
 
-      m_signal.m_connections.remove (this);
-      m_connected = false;
+    Connection &operator= (const Connection &) = delete;
+    Connection &operator= (Connection &&) = delete;
+
+    [[nodiscard]] TemporaryDisconnector temporaryDisconnect () { return TemporaryDisconnector (m_handler); }
+
+  private:
+    friend class Signal;
+    Connection (Handler &&handler, Signal &s) : m_handler (std::move (handler)), m_signal (&s) {}
+    Connection (const Handler &handler, Signal &s) : m_handler (handler), m_signal (&s) {}
+
+  private:
+    Handler m_handler = [] (Args...) {};
+    Signal *m_signal = nullptr;
+  };
+
+  class TemporaryDisconnector
+  {
+  public:
+    TemporaryDisconnector (const TemporaryDisconnector &) = delete;
+    TemporaryDisconnector (TemporaryDisconnector &&) = delete;
+    ~TemporaryDisconnector () { m_targetHandler = std::move (m_handler); }
+
+    TemporaryDisconnector &operator= (const TemporaryDisconnector &) = delete;
+    TemporaryDisconnector &operator= (TemporaryDisconnector &&) = delete;
+
+  private:
+    friend class Connection;
+    TemporaryDisconnector (Handler &handler) : m_targetHandler (handler), m_handler (std::move (handler))
+    {
+      m_targetHandler = [] (Args...) {};
     }
 
   private:
-    friend class signal;
-    connection (std::function<void (Args...)> &&handler, signal &s) : m_handler (std::move (handler)), m_signal (s) {}
-
-    std::function<void (Args...)> m_handler;
-    signal &m_signal;
-    bool m_connected = true;
+    Handler &m_targetHandler;
+    Handler m_handler;
   };
 
-  signal ();
-  ~signal ();
+  Signal ();
+  ~Signal ();
 
-  signal (const signal &) = delete;
-  signal (signal &&) = delete;
+  Signal (const Signal &) = delete;
+  Signal (Signal &&) = delete;
 
-  signal &operator= (const signal &) = delete;
-  signal &operator= (signal &&) = delete;
+  Signal &operator= (const Signal &) = delete;
+  Signal &operator= (Signal &&) = delete;
 
-  connection connect (std::function<void (Args...)>);
+  [[nodiscard]] Connection connect (Handler &&);
+  [[nodiscard]] Connection connect (const Handler &);
   void notify (Args... args);
 
 private:
-  std::vector<connection *> m_connections;
+  std::vector<Connection *> m_connections;
 };
 
 //----------------------------------------------
 
 template<typename... Args>
-signal<Args...>::signal ()
+Signal<Args...>::Signal ()
 {
 }
 
 template<typename... Args>
-signal<Args...>::~signal ()
+Signal<Args...>::~Signal ()
 {
-  for (connection *con : m_connections)
-    con->m_connected = false;
+  for (Connection *con : m_connections)
+    {
+      con->m_signal = nullptr;
+
+      /// \note Clear Handler
+      con->m_handler = {};
+    }
 }
 
 template<typename... Args>
-typename signal<Args...>::connection signal<Args...>::connect (std::function<void (Args...)> handler)
+typename Signal<Args...>::Connection Signal<Args...>::connect (const Handler &handler)
 {
-  connection con (std::move (handler), *this);
+  Connection con (handler, *this);
   m_connections.emplace_back (&con);
   return con;
 }
 
 template<typename... Args>
-void signal<Args...>::notify (Args... args)
+typename Signal<Args...>::Connection Signal<Args...>::connect (Handler &&handler)
 {
-  for (connection *con : m_connections)
+  Connection con (std::move (handler), *this);
+  m_connections.emplace_back (&con);
+  return con;
+}
+
+template<typename... Args>
+void Signal<Args...>::notify (Args... args)
+{
+  for (Connection *con : m_connections)
     con->m_handler (args...);
 }
 }  // namespace utils
