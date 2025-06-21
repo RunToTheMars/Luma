@@ -16,6 +16,7 @@ add_subdirectory(src/GL/GLShaderProgram)
 add_subdirectory(src/GL/GLWindow)
 add_subdirectory(src/GL/Geometry)
 add_subdirectory(src/utils/signal)
+add_subdirectory(src/utils/do_after_scope)
 
 add_executable(hello_world src/HelloWorld/main.cpp)
 target_link_libraries(hello_world
