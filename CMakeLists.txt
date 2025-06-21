@@ -27,4 +27,5 @@ target_link_libraries(hello_ascii
                       PRIVATE libglew_static
                       PRIVATE libgl_shaderprogram
                       PRIVATE libgl_ascii
-                      PRIVATE libgl_window)
+                      PRIVATE libgl_window
+                      PRIVATE Qt6::Core)
