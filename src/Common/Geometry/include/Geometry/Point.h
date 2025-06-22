@@ -1,7 +1,5 @@
 #pragma once
 
-namespace Common
-{
 namespace Geometry
 {
 class Point
@@ -132,4 +130,3 @@ constexpr inline Point operator/ (const Point &point, double divisor)
                 static_cast<int> (static_cast<double> (point.y ()) / divisor));
 }
 }  // namespace Geometry
-}  // namespace Common

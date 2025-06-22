@@ -1,10 +1,12 @@
 #include "GL/ASCII/v130/Word.h"
 #include "GL/ASCII/v150/Word.h"
+#include "GL/KeyEvent.h"
+#include "GL/ResizeEvent.h"
 #include "GL/Window.h"
-
+#include "Geometry/Size.h"
 #include <GL/glew.h>
-#include <stdexcept>
 #include <chrono>
+#include <stdexcept>
 
 namespace Word = GL_ASCII::v150::Word;
 
@@ -52,15 +54,20 @@ public:
 
     if (!m_curFPS.empty ())
       {
+        constexpr double scale = 1.;
         auto binder = Word::Binder ();
-        binder.setGLSize (32.f * Word::glyphTextureWidth () / width (), 32.f * Word::glyphTextureHeight () / height ());
+        binder.setGLSize (2.f * Word::glyphTextureWidth () / size ().width (), 2.f * Word::glyphTextureHeight () / size ().height ());
         Word::SymbolsData data (m_curFPS.c_str (), m_curFPS.size ());
         for (int i = 0; i < 1; i++)
           binder.draw (data);
       }
   }
 
-  void resizeEvent (const GL::ResizeEvent &event) override { glViewport (0, 0, event.width (), event.height ()); }
+  void resizeEvent (const GL::ResizeEvent &event) override
+  {
+    glViewport (0, 0, event.size ().width (), event.size ().height ());
+    GL::Widget::resizeEvent (event);
+  }
 
   void keyEvent (const GL::KeyEvent &event) override
   {
@@ -69,11 +76,10 @@ public:
   }
 };
 
-
 int main ()
 {
   MyWindow window;
-  window.create (800 /*width*/, 600 /*height*/, "Hello ASCII!")
+  window.create ({800, 600} /* size */, "Hello ASCII!")
       .setResizable (true)
       .setDecorated (true)
       .setVisible (true)

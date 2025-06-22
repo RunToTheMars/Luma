@@ -1,7 +1,7 @@
 #pragma once
 
-namespace Common
-{
+#include "Geometry/Point.h"
+
 namespace Geometry
 {
 class PointF
@@ -14,8 +14,8 @@ public:
   constexpr inline double x () const noexcept;
   constexpr inline double y () const noexcept;
 
-  constexpr inline double &rx () const noexcept;
-  constexpr inline double &ry () const noexcept;
+  constexpr inline double &rx () noexcept;
+  constexpr inline double &ry () noexcept;
 
   constexpr inline bool isNull () const noexcept;
 
@@ -40,8 +40,8 @@ constexpr inline PointF::PointF (const PointF & point) noexcept : m_x (point.x (
 constexpr inline double PointF::x () const noexcept { return m_x; }
 constexpr inline double PointF::y () const noexcept { return m_y; }
 
-constexpr inline double &PointF::rx () const noexcept { return m_x; }
-constexpr inline double &PointF::ry () const noexcept { return m_y; }
+constexpr inline double &PointF::rx () noexcept { return m_x; }
+constexpr inline double &PointF::ry () noexcept { return m_y; }
 
 constexpr inline bool PointF::isNull () const noexcept { return m_x == 0 && m_y == 0; }
 
@@ -50,11 +50,10 @@ constexpr inline Point PointF::toPoint () const
   return Point(static_cast<int> (m_x), static_cast<int> (m_y));
 }
 
-constexpr inline PointF transposed () const noexcept { return PointF (m_y, m_x); }
+constexpr inline PointF PointF::transposed () const noexcept { return PointF (m_y, m_x); }
 
 constexpr inline double PointF::dotProduct (const PointF & p1, const PointF & p2)
 {
   return p1.m_x * p2.m_x + p1.m_y * p2.m_y;
 }
 } // namespace Geometry
-} // namespace Common

@@ -2,9 +2,8 @@
 
 #include <utility>
 
-namespace utils
+namespace Details
 {
-
 template<typename FUNC>
 class DoAfterScope
 {
@@ -15,6 +14,6 @@ public:
 private:
   FUNC m_func;
 };
+}
 
-#define DO_AFTER_SCOPE(...) [[maybe_unused]] utils::DoAfterScope do_after_scope_##__LINE__ ([&] { __VA_ARGS__ ; });
-}  // namespace utils
+#define DO_AFTER_SCOPE(...) [[maybe_unused]] Details::DoAfterScope doAfterScope##__LINE__ ([&] { __VA_ARGS__ ; });

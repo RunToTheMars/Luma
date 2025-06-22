@@ -1,4 +1,7 @@
+#include "GL/KeyEvent.h"
+#include "GL/ResizeEvent.h"
 #include "GL/Window.h"
+#include "Geometry/Size.h"
 #include <GL/glew.h>
 
 class MyWindow : public GL::Window
@@ -15,7 +18,7 @@ public:
     glClear (GL_COLOR_BUFFER_BIT);
   }
 
-  void resizeEvent (const GL::ResizeEvent &event) override { glViewport (0, 0, event.width (), event.height ()); }
+  void resizeEvent (const GL::ResizeEvent &event) override { glViewport (0, 0, event.size ().width (), event.size ().height ()); }
 
   void keyEvent (const GL::KeyEvent &event) override
   {
@@ -24,11 +27,10 @@ public:
   }
 };
 
-
 int main ()
 {
   MyWindow window;
-  window.create (800 /*width*/, 600 /*height*/, "Hello World!")
+  window.create ({800, 600} /* size */, "Hello World!")
       .setResizable (true)
       .setDecorated (true)
       .setVisible (true)

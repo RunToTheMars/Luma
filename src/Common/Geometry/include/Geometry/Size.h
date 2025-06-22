@@ -1,7 +1,5 @@
 #pragma once
 
-namespace Common
-{
 namespace Geometry
 {
 class Size
@@ -117,4 +115,3 @@ constexpr inline Size operator/ (const Size &size, double divisor)
                static_cast<int> (static_cast<double> (size.height ()) / divisor));
 }
 } // namespace Geometry
-} // namespace Common

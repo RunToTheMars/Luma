@@ -1,18 +1,19 @@
 #pragma once
 
 #include "GL/ResizeEvent.h"
-#include "GL/KeyEvent.h"
-#include "GL/MouseEvent.h"
+#include "GL/Widget.h"
 #include <memory>
 
 namespace GL
 {
 class WindowCreateConfig;
-class Window
+class WindowImpl;
+class EventCallback;
+class Window: public GL::Widget
 {
 public:
   Window ();
-  virtual ~Window ();
+  ~Window ();
 
   Window (const Window &) = delete;
   Window &operator= (const Window &) = delete;
@@ -20,27 +21,29 @@ public:
   Window (Window &&) = delete;
   Window &operator= (Window &&) = delete;
 
-  WindowCreateConfig create (int width, int height, const char *title);
+  WindowCreateConfig create (const Geometry::Size &size, const char *title);
   void exec ();
   void close ();
 
-  int width () const;
-  int height () const;
-
-public:
-  virtual void resizeEvent (const ResizeEvent &event);
-  virtual void keyEvent (const KeyEvent &event);
-  virtual void mouseEvent (const MouseEvent &event);
-
 private:
   virtual void init ();
-  virtual void renderEvent ();
+
+protected:
+  void resizeEvent (const ResizeEvent &event) override;
+  void keyEvent (const KeyEvent &event) override;
+  void mouseEvent (const MouseEvent &event) override;
+  void renderEvent () override;
+
+private:
+  friend class GL::WindowCreateConfig;
+  friend class GL::EventCallback;
+
+  std::unique_ptr<WindowImpl> m_pimpl;
 };
 
 class WindowCreateConfig
 {
 public:
-  WindowCreateConfig (int width, int height, const char *title);
   ~WindowCreateConfig ();
 
   /// FrameBuffer
@@ -76,8 +79,13 @@ public:
   WindowCreateConfig &setVersionMinor (int val);
 
 private:
-  int m_width = 800;
-  int m_height = 600;
+  friend class GL::Window;
+
+  WindowCreateConfig (GL::Window &window, const Geometry::Size &size, const char *title);
+
+private:
+  GL::Window &m_window;
+  Geometry::Size m_size = {800, 600};
   const char *m_title = nullptr;
 };
 }  // namespace GL

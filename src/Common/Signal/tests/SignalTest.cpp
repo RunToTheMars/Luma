@@ -3,10 +3,10 @@
 
 TEST (Signal, OneNotify)
 {
-  utils::Signal<> buttonClicked;
+  Common::Signal<> buttonClicked;
 
   int x = 0;
-  utils::Signal<>::Connection connection = buttonClicked.connect ([&] { x++; });
+  Common::Signal<>::Connection connection = buttonClicked.connect ([&] { x++; });
 
   buttonClicked.notify ();
   EXPECT_EQ (x, 1);
@@ -17,10 +17,10 @@ TEST (Signal, OneNotify)
 
 TEST (Signal, OneNotifyArg)
 {
-  utils::Signal<int> buttonClicked;
+  Common::Signal<int> buttonClicked;
 
   int x = 0;
-  utils::Signal<int>::Connection connection = buttonClicked.connect ([&] (int signal) { x = signal; });
+  Common::Signal<int>::Connection connection = buttonClicked.connect ([&] (int signal) { x = signal; });
 
   buttonClicked.notify (10);
   EXPECT_EQ (x, 10);
@@ -31,16 +31,16 @@ TEST (Signal, OneNotifyArg)
 
 TEST (Signal, TwoNotify)
 {
-  utils::Signal<> buttonClicked;
+  Common::Signal<> buttonClicked;
 
   int x = 0;
-  utils::Signal<>::Connection connectionX = buttonClicked.connect ([&] { x++; });
+  Common::Signal<>::Connection connectionX = buttonClicked.connect ([&] { x++; });
 
   buttonClicked.notify ();
   EXPECT_EQ (x, 1);
 
   int y = 0;
-  utils::Signal<>::Connection connectionY = buttonClicked.connect ([&] { y--; });
+  Common::Signal<>::Connection connectionY = buttonClicked.connect ([&] { y--; });
 
   buttonClicked.notify ();
   EXPECT_EQ (x, 2);
@@ -49,10 +49,10 @@ TEST (Signal, TwoNotify)
 
 TEST (Signal, DisconnectedNotify)
 {
-  utils::Signal<> buttonClicked;
+  Common::Signal<> buttonClicked;
 
   int x = 0;
-  utils::Signal<>::Connection connection = buttonClicked.connect ([&] { x++; });
+  Common::Signal<>::Connection connection = buttonClicked.connect ([&] { x++; });
 
   buttonClicked.notify ();
   EXPECT_EQ (x, 1);
@@ -65,11 +65,11 @@ TEST (Signal, DisconnectedNotify)
 
 TEST (Signal, ConnectionLost)
 {
-  utils::Signal<> buttonClicked = utils::Signal<> ();
+  Common::Signal<> buttonClicked = Common::Signal<> ();
 
   int x = 0;
   {
-    utils::Signal<>::Connection connection = buttonClicked.connect ([&] { x++; });
+    Common::Signal<>::Connection connection = buttonClicked.connect ([&] { x++; });
   }
 
   buttonClicked.notify ();

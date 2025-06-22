@@ -1,16 +1,25 @@
 #include "GL/Window.h"
+#include "GL/KeyEvent.h"
+#include "GL/MouseEvent.h"
+#include "GL/ResizeEvent.h"
+#include "GL/Widget.h"
 #include <GLFW/glfw3.h>
 #include <stdexcept>
+#include <unordered_map>
+
+namespace GL
+{
+class EventCallback
+{
+public:
+  static void resizeCallback (GL::Window &window, const GL::ResizeEvent &event) { window.resizeEvent (event); }
+  static void keyCallback (GL::Window &window, const GL::KeyEvent &event) { window.keyEvent (event); }
+  static void mouseCallback (GL::Window &window, const GL::MouseEvent &event) { window.mouseEvent (event); }
+};
+}
+
 namespace
 {
-
-struct
-{
-  GLFWwindow *nativePtr = nullptr;
-  GL::Window *ptr = nullptr;
-  int width = 0;
-  int height = 0;
-} global_window_data;
 
 // clang-format off
 int toGLFW (GL::WindowCreateConfig::Profile profile)
@@ -52,6 +61,7 @@ GL::Key toKey (int key)
 }
 // clang-format on
 
+// clang-format off
 GL::KeyAction toKeyAction (int action)
 {
   switch (action)
@@ -64,50 +74,77 @@ GL::KeyAction toKeyAction (int action)
   throw std::runtime_error ("Invalid KeyAction");
   return GL::KeyAction::Repeat;
 }
+// clang-format on
 
-void key_callback (GLFWwindow * /*window*/, int key, int scancode, int action, int /*mode*/)
+class GLFWWindowContainer
 {
-  global_window_data.ptr->keyEvent (GL::KeyEvent (toKey (key), toKeyAction (action)));
+public:
+  static GLFWWindowContainer &get_instance ()
+  {
+    static GLFWWindowContainer container;
+    return container;
+  }
+
+  void add (GLFWwindow &glfwwindow, GL::Window &window) { m_data.emplace (&glfwwindow, &window); }
+  void remove (GLFWwindow &glfwwindow) { m_data.erase (&glfwwindow); }
+
+  GL::Window &find (GLFWwindow &glfwwindow)
+  {
+    auto it = m_data.find (&glfwwindow);
+    return *it->second;
+  }
+
+private:
+  GLFWWindowContainer () = default;
+  ~GLFWWindowContainer () = default;
+
+  std::unordered_map<GLFWwindow *, GL::Window *> m_data;
+};
+
+void keyCallback (GLFWwindow *window, int key, int /*scancode*/, int action, int /*mode*/)
+{
+  GL::EventCallback::keyCallback (GLFWWindowContainer::get_instance ().find (*window), GL::KeyEvent (toKey (key), toKeyAction (action)));
 }
 
-void resize_callback (GLFWwindow * /*window*/, int width, int height)
+void resizeCallback (GLFWwindow *window, int width, int height)
 {
-  int oldWidth = global_window_data.width;
-  int oldHeight = global_window_data.height;
-
-  global_window_data.width = width;
-  global_window_data.height = height;
-
-  global_window_data.ptr->resizeEvent (GL::ResizeEvent (oldWidth, oldHeight, width, height));
+  GL::EventCallback::resizeCallback (GLFWWindowContainer::get_instance ().find (*window), GL::ResizeEvent (Geometry::Size (width, height)));
 }
+
+// void mouseCallback (GLFWwindow *window, int width, int height)
+// {
+//   GL::EventCallback::resizeCallback (GLFWWindowContainer::get_instance ().find (*window), GL::ResizeEvent (Geometry::Size (width, height)));
+// }
+}  // namespace
+
+namespace
+{
+
 }  // namespace
 
 namespace GL
 {
 
-Window::Window ()
+class WindowImpl
 {
-  if (global_window_data.ptr)
-    throw std::runtime_error ("Window is singleton");
+public:
+  GLFWwindow *window = nullptr;
+};
 
-  glfwInit ();
-  global_window_data.ptr = this;
-}
+Window::Window () : m_pimpl (std::make_unique<WindowImpl> ()) {}
 
 Window::~Window ()
 {
-  if (global_window_data.nativePtr)
-    glfwDestroyWindow (global_window_data.nativePtr);
-
-  glfwTerminate ();
+  if (GLFWwindow *window = m_pimpl->window)
+    {
+      glfwDestroyWindow (window);
+      GLFWWindowContainer::get_instance ().remove (*window);
+    }
 }
 
-WindowCreateConfig Window::create (int width, int height, const char *title)
+WindowCreateConfig Window::create (const Geometry::Size &size, const char *title)
 {
-  if (global_window_data.nativePtr)
-    throw std::runtime_error ("Call Window::create once!");
-
-  return WindowCreateConfig (width, height, title);
+  return WindowCreateConfig (*this, size, title);
 }
 
 void Window::init () {}
@@ -117,37 +154,37 @@ void Window::keyEvent (const KeyEvent & /*event*/) {}
 void Window::mouseEvent (const MouseEvent & /*event*/) {}
 void Window::exec ()
 {
-  glfwMakeContextCurrent (global_window_data.nativePtr);
   glfwSwapInterval (0);
+  glfwMakeContextCurrent (m_pimpl->window);
   init ();
 
-  while (!glfwWindowShouldClose (global_window_data.nativePtr))
+  while (!glfwWindowShouldClose (m_pimpl->window))
     {
+      glfwMakeContextCurrent (m_pimpl->window);
       renderEvent ();
-      glfwSwapBuffers (global_window_data.nativePtr);
+      glfwSwapBuffers (m_pimpl->window);
       glfwPollEvents ();
     }
 }
 
-void Window::close () { glfwSetWindowShouldClose (global_window_data.nativePtr, GL_TRUE); }
+void Window::close () { glfwSetWindowShouldClose (m_pimpl->window, GL_TRUE); }
 
-int Window::width () const { return global_window_data.width; }
-int Window::height () const { return global_window_data.height; }
-
-WindowCreateConfig::WindowCreateConfig (int width, int height, const char *title)
-  : m_width (width), m_height (height), m_title (title)
+WindowCreateConfig::WindowCreateConfig (GL::Window &window, const Geometry::Size &size, const char *title)
+  : m_window (window), m_size (size), m_title (title)
 {
+  glfwInit ();
   glfwDefaultWindowHints ();
 }
 
 WindowCreateConfig::~WindowCreateConfig ()
 {
-  global_window_data.nativePtr = glfwCreateWindow (m_width, m_height, m_title, nullptr, nullptr);
-  global_window_data.width = m_width;
-  global_window_data.height = m_height;
+  m_window.m_pimpl->window = glfwCreateWindow (m_size.width (), m_size.height (), m_title, nullptr, nullptr);
+  GLFWWindowContainer::get_instance ().add (*m_window.m_pimpl->window, m_window);
 
-  glfwSetKeyCallback (global_window_data.nativePtr, key_callback);
-  glfwSetFramebufferSizeCallback (global_window_data.nativePtr, resize_callback);
+  resizeCallback (m_window.m_pimpl->window, m_size.width (), m_size.height ());
+
+  glfwSetKeyCallback (m_window.m_pimpl->window, keyCallback);
+  glfwSetWindowSizeCallback (m_window.m_pimpl->window, resizeCallback);
 }
 
 WindowCreateConfig &WindowCreateConfig::setRedBits (int val)

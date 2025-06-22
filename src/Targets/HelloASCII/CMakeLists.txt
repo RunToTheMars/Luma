@@ -13,5 +13,5 @@ target_link_libraries(HelloASCII
                       PRIVATE libglew_static
                       PRIVATE LibGL_ShaderProgram
                       PRIVATE LibGL_ASCII
-                      PRIVATE LibGL_Window)
+                      PRIVATE LibGL_Widget)
 

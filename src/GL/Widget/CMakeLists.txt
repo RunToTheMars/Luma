@@ -10,11 +10,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON) # Обязательно ли использ
 
 add_subdirectory(glfw) # Подключение библиотеки glfw (выполняет CMakeLists, позволяет юзать их target)
 
-add_library (LibGL_Window
+add_library (LibGL_Widget
              src/Window.cpp
-     )
+             src/Widget.cpp)
 
-target_include_directories(LibGL_Window PUBLIC include)
+target_include_directories(LibGL_Widget PUBLIC include)
 
-target_link_libraries(LibGL_Window
-                      PRIVATE glfw)
+target_link_libraries(LibGL_Widget
+                      PRIVATE glfw
+                      PRIVATE libglew_static
+                      PUBLIC LibCommon_Geometry)

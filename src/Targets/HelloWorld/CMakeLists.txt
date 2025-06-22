@@ -11,4 +11,4 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON) # Обязательно ли использ
 add_executable(HelloWorld src/main.cpp)
 target_link_libraries(HelloWorld
                       PRIVATE libglew_static
-                      PRIVATE LibGL_Window)
+                      PRIVATE LibGL_Widget)

@@ -15,7 +15,7 @@ add_subdirectory(src/Common/DoAfterScope)
 add_subdirectory(src/GL/glew)
 add_subdirectory(src/GL/ASCII)
 add_subdirectory(src/GL/ShaderProgram)
-add_subdirectory(src/GL/Window)
+add_subdirectory(src/GL/Widget)
 
 add_subdirectory(src/Targets/HelloASCII)
 add_subdirectory(src/Targets/HelloWorld)

@@ -3,7 +3,7 @@
 #include <functional>
 #include <vector>
 
-namespace utils
+namespace Common
 {
 template<typename... Args>
 class Signal
