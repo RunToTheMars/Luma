@@ -8,25 +8,14 @@ project(HelloWorld                      # PROJECT_NAME
 set(CMAKE_CXX_STANDARD 17)          # Версия стандарта С++
 set(CMAKE_CXX_STANDARD_REQUIRED ON) # Обязательно ли использовать именно этот стандарт, или можно выше.
 
-find_package (Qt6 REQUIRED COMPONENTS CORE)
+add_subdirectory(src/Common/Geometry)
+add_subdirectory(src/Common/Signal)
+add_subdirectory(src/Common/DoAfterScope)
 
 add_subdirectory(src/GL/glew)
-add_subdirectory(src/GL/GLASCII)
-add_subdirectory(src/GL/GLShaderProgram)
-add_subdirectory(src/GL/GLWindow)
-add_subdirectory(src/GL/Geometry)
-add_subdirectory(src/utils/signal)
-add_subdirectory(src/utils/do_after_scope)
+add_subdirectory(src/GL/ASCII)
+add_subdirectory(src/GL/ShaderProgram)
+add_subdirectory(src/GL/Window)
 
-add_executable(hello_world src/HelloWorld/main.cpp)
-target_link_libraries(hello_world
-                      PRIVATE libglew_static
-                      PRIVATE libgl_window)
-
-add_executable(hello_ascii src/HelloASCII/main.cpp)
-target_link_libraries(hello_ascii
-                      PRIVATE libglew_static
-                      PRIVATE libgl_shaderprogram
-                      PRIVATE libgl_ascii
-                      PRIVATE libgl_window
-                      PRIVATE Qt6::Core)
+add_subdirectory(src/Targets/HelloASCII)
+add_subdirectory(src/Targets/HelloWorld)
