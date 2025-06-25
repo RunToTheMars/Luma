@@ -52,7 +52,7 @@ int ShaderProgram::attributeLocation (const char *name) const noexcept
 
 ShaderProgramBinder ShaderProgram::bind () const noexcept
 {
-  return ShaderProgramBinder (id ());
+  return ShaderProgramBinder (mId);
 }
 
 //-----------------------------------------------------------------------------------------
@@ -65,11 +65,14 @@ ShaderProgramLinker::~ShaderProgramLinker () noexcept
 {
 }
 
-namespace
+std::optional<ShaderProgram> ShaderProgramLinker::link (std::initializer_list<int> shaderIds) noexcept
 {
-std::optional<ShaderProgram> tryLink (int id, std::unique_ptr<char[]> &linkError) noexcept
-{
-  ShaderProgram shaderProgram (id);
+  ShaderProgram shaderProgram (glCreateProgram ());
+  int id = shaderProgram.id ();
+
+  for (int shaderId : shaderIds)
+    glAttachShader (id, shaderId);
+
   glLinkProgram (id);
 
   int success;
@@ -77,33 +80,14 @@ std::optional<ShaderProgram> tryLink (int id, std::unique_ptr<char[]> &linkError
   if (!success)
     {
       constexpr int linkErrorBufSize = 512;
-      if (!linkError)
-        linkError = std::make_unique<char[]> (linkErrorBufSize);
+      if (!mLinkError)
+        mLinkError = std::make_unique<char[]> (linkErrorBufSize);
 
-      glGetProgramInfoLog (id, linkErrorBufSize, NULL, linkError.get ());
+      glGetProgramInfoLog (id, linkErrorBufSize, NULL, mLinkError.get ());
       return std::nullopt;
     }
 
   return shaderProgram;
-}
-}
-
-std::optional<ShaderProgram> ShaderProgramLinker::link (std::initializer_list<int> shaderIds) noexcept
-{
-  int id = glCreateProgram ();
-  for (int shaderId : shaderIds)
-    glAttachShader (id, shaderId);
-
-  return tryLink (id, mLinkError);
-}
-
-std::optional<ShaderProgram> ShaderProgramLinker::link (std::initializer_list<Shader> shaders) noexcept
-{
-  int id = glCreateProgram ();
-  for (const Shader &shader : shaders)
-    glAttachShader (id, shader.id ());
-
-  return tryLink (id, mLinkError);
 }
 
 const char *ShaderProgramLinker::linkError () const noexcept
@@ -127,79 +111,94 @@ ShaderProgramBinder::~ShaderProgramBinder() noexcept
   glUseProgram (0);
 }
 
-void ShaderProgramBinder::setUniform (int location, float x) noexcept
+ShaderProgramBinder &ShaderProgramBinder::setUniform (int location, float x) noexcept
 {
   glUniform1f (location, x);
+  return *this;
 }
 
-void ShaderProgramBinder::setUniform (int location, float x, float y) noexcept
+ShaderProgramBinder &ShaderProgramBinder::setUniform (int location, float x, float y) noexcept
 {
   glUniform2f (location, x, y);
+  return *this;
 }
 
-void ShaderProgramBinder::setUniform (int location, float x, float y, float z) noexcept
+ShaderProgramBinder &ShaderProgramBinder::setUniform (int location, float x, float y, float z) noexcept
 {
   glUniform3f (location, x, y, z);
+  return *this;
 }
 
-void ShaderProgramBinder::setUniform (int location, float x, float y, float z, float w) noexcept
+ShaderProgramBinder &ShaderProgramBinder::setUniform (int location, float x, float y, float z, float w) noexcept
 {
   glUniform4f (location, x, y, z, w);
+  return *this;
 }
 
-void ShaderProgramBinder::setUniform (int location, int x) noexcept
+ShaderProgramBinder &ShaderProgramBinder::setUniform (int location, int x) noexcept
 {
   glUniform1i (location, x);
+  return *this;
 }
 
-void ShaderProgramBinder::setUniform (int location, int x, int y) noexcept
+ShaderProgramBinder &ShaderProgramBinder::setUniform (int location, int x, int y) noexcept
 {
   glUniform2i (location, x, y);
+  return *this;
 }
 
-void ShaderProgramBinder::setUniform (int location, int x, int y, int z) noexcept
+ShaderProgramBinder &ShaderProgramBinder::setUniform (int location, int x, int y, int z) noexcept
 {
   glUniform3i (location, x, y, z);
+  return *this;
 }
 
-void ShaderProgramBinder::setUniform (int location, int x, int y, int z, int w) noexcept
+ShaderProgramBinder &ShaderProgramBinder::setUniform (int location, int x, int y, int z, int w) noexcept
 {
   glUniform4i (location, x, y, z, w);
+  return *this;
 }
 
-void ShaderProgramBinder::setUniform (int location, unsigned int x) noexcept
+ShaderProgramBinder &ShaderProgramBinder::setUniform (int location, unsigned int x) noexcept
 {
   glUniform1ui (location, x);
+  return *this;
 }
 
-void ShaderProgramBinder::setUniform (int location, unsigned int x, unsigned int y) noexcept
+ShaderProgramBinder &ShaderProgramBinder::setUniform (int location, unsigned int x, unsigned int y) noexcept
 {
   glUniform2ui (location, x, y);
+  return *this;
 }
 
-void ShaderProgramBinder::setUniform (int location, unsigned int x, unsigned int y, unsigned int z) noexcept
+ShaderProgramBinder &ShaderProgramBinder::setUniform (int location, unsigned int x, unsigned int y, unsigned int z) noexcept
 {
   glUniform3ui (location, x, y, z);
+  return *this;
 }
 
-void ShaderProgramBinder::setUniform (int location, unsigned int x, unsigned int y, unsigned int z, unsigned int w) noexcept
+ShaderProgramBinder &ShaderProgramBinder::setUniform (int location, unsigned int x, unsigned int y, unsigned int z, unsigned int w) noexcept
 {
   glUniform4ui (location, x, y, z, w);
+  return *this;
 }
 
-void ShaderProgramBinder::setUniformMatrix2 (int location, const float *m, bool transpose, int count) noexcept
+ShaderProgramBinder &ShaderProgramBinder::setUniformMatrix2 (int location, const float *m, bool transpose, int count) noexcept
 {
   glUniformMatrix2fv (location, count, transpose, m);
+  return *this;
 }
 
-void ShaderProgramBinder::setUniformMatrix3 (int location, const float *m, bool transpose, int count) noexcept
+ShaderProgramBinder &ShaderProgramBinder::setUniformMatrix3 (int location, const float *m, bool transpose, int count) noexcept
 {
   glUniformMatrix3fv (location, count, transpose, m);
+  return *this;
 }
 
-void ShaderProgramBinder::setUniformMatrix4 (int location, const float *m, bool transpose, int count) noexcept
+ShaderProgramBinder &ShaderProgramBinder::setUniformMatrix4 (int location, const float *m, bool transpose, int count) noexcept
 {
   glUniformMatrix4fv (location, count, transpose, m);
+  return *this;
 }
 
 //-----------------------------------------------------------------------------------------

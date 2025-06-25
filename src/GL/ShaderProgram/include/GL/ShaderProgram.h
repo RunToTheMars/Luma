@@ -38,7 +38,6 @@ public:
   ~ShaderProgramLinker () noexcept;
 
   std::optional<ShaderProgram> link (std::initializer_list<int> shaderIds) noexcept;
-  std::optional<ShaderProgram> link (std::initializer_list<Shader> shaders) noexcept;
   const char *linkError () const noexcept;
 
 private:
@@ -57,24 +56,24 @@ public:
   ShaderProgramBinder &operator= (const ShaderProgramBinder &) = delete;
   ShaderProgramBinder &operator= (ShaderProgramBinder &&) = delete;
 
-  void setUniform (int location, float x) noexcept;
-  void setUniform (int location, float x, float y) noexcept;
-  void setUniform (int location, float x, float y, float z) noexcept;
-  void setUniform (int location, float x, float y, float z, float w) noexcept;
+  ShaderProgramBinder &setUniform (int location, float x) noexcept;
+  ShaderProgramBinder &setUniform (int location, float x, float y) noexcept;
+  ShaderProgramBinder &setUniform (int location, float x, float y, float z) noexcept;
+  ShaderProgramBinder &setUniform (int location, float x, float y, float z, float w) noexcept;
 
-  void setUniform (int location, int x) noexcept;
-  void setUniform (int location, int x, int y) noexcept;
-  void setUniform (int location, int x, int y, int z) noexcept;
-  void setUniform (int location, int x, int y, int z, int w) noexcept;
+  ShaderProgramBinder &setUniform (int location, int x) noexcept;
+  ShaderProgramBinder &setUniform (int location, int x, int y) noexcept;
+  ShaderProgramBinder &setUniform (int location, int x, int y, int z) noexcept;
+  ShaderProgramBinder &setUniform (int location, int x, int y, int z, int w) noexcept;
 
-  void setUniform (int location, unsigned int x) noexcept;
-  void setUniform (int location, unsigned int x, unsigned int y) noexcept;
-  void setUniform (int location, unsigned int x, unsigned int y, unsigned int z) noexcept;
-  void setUniform (int location, unsigned int x, unsigned int y, unsigned int z, unsigned int w) noexcept;
+  ShaderProgramBinder &setUniform (int location, unsigned int x) noexcept;
+  ShaderProgramBinder &setUniform (int location, unsigned int x, unsigned int y) noexcept;
+  ShaderProgramBinder &setUniform (int location, unsigned int x, unsigned int y, unsigned int z) noexcept;
+  ShaderProgramBinder &setUniform (int location, unsigned int x, unsigned int y, unsigned int z, unsigned int w) noexcept;
 
-  void setUniformMatrix2 (int location, const float *m, bool transpose = true, int count = 1) noexcept;
-  void setUniformMatrix3 (int location, const float *m, bool transpose = true, int count = 1) noexcept;
-  void setUniformMatrix4 (int location, const float *m, bool transpose = true, int count = 1) noexcept;
+  ShaderProgramBinder &setUniformMatrix2 (int location, const float *m, bool transpose = true, int count = 1) noexcept;
+  ShaderProgramBinder &setUniformMatrix3 (int location, const float *m, bool transpose = true, int count = 1) noexcept;
+  ShaderProgramBinder &setUniformMatrix4 (int location, const float *m, bool transpose = true, int count = 1) noexcept;
 
 private:
   int mId;

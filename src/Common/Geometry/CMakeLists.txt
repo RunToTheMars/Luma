@@ -9,8 +9,7 @@ set(CMAKE_CXX_STANDARD 17)          # Версия стандарта С++
 set(CMAKE_CXX_STANDARD_REQUIRED ON) # Обязательно ли использовать именно этот стандарт, или можно выше.
 
 add_library (LibCommon_Geometry
-             src/Empty.cpp
-             include/Geometry/Rect.h)
+             src/Empty.cpp)
 target_include_directories(LibCommon_Geometry PUBLIC include)
 
 enable_testing()

@@ -1,5 +1,6 @@
 #include "GL/ASCII/v130/Word.h"
 #include "GL/ASCII/v150/Word.h"
+#include "GL/ASCII/v130_2/Word.h"
 #include "GL/KeyEvent.h"
 #include "GL/ResizeEvent.h"
 #include "GL/Window.h"
@@ -16,6 +17,8 @@ class MyWindow : public GL::Window
   int m_frames = 0;
   std::string m_curFPS;
 
+  GL::ASCII::v130::Renderer mTextRenderer;
+
 public:
   MyWindow () noexcept = default;
   ~MyWindow () noexcept override = default;
@@ -25,10 +28,12 @@ public:
     if (glewInit () != GLEW_OK)
       throw std::runtime_error ("Can't init glew");
 
-    Word::Binder ()
-        .setGLPosition (0.f, 0.f, 0.f)
+    mTextRenderer.initialize ();
+    mTextRenderer.bind ()
+        .setPosition (0.f, 0.f, 0.f)
         .setColor (1.f, 1.f, 0.f, 1.f)
         .setBackgroundColor (1.f, 1.f, 1.f, 0.f);
+
     m_start = std::chrono::steady_clock::now ();
     m_frames = 0;
   }
@@ -55,9 +60,9 @@ public:
     if (!m_curFPS.empty ())
       {
         constexpr double scale = 1.;
-        auto binder = Word::Binder ();
-        binder.setGLSize (2.f * Word::glyphTextureWidth () / size ().width (), 2.f * Word::glyphTextureHeight () / size ().height ());
-        Word::SymbolsData data (m_curFPS.c_str (), m_curFPS.size ());
+        auto binder = mTextRenderer.bind ();
+        binder.setSize (2.f * Word::glyphTextureWidth () / size ().width (), 2.f * Word::glyphTextureHeight () / size ().height ());
+        GL::ASCII::v130::Renderer::Data data (m_curFPS.c_str (), m_curFPS.size ());
         for (int i = 0; i < 1; i++)
           binder.draw (data);
       }

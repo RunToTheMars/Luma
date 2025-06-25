@@ -10,10 +10,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON) # Обязательно ли использ
 
 add_library (LibGL_ASCII STATIC
              src/v130/Word.cpp
+             src/v130_2/Word.cpp
              src/v150/Word.cpp)
 
 target_include_directories(LibGL_ASCII PUBLIC include)
 
 target_link_libraries(LibGL_ASCII
                       PRIVATE libglew_static
-                      PRIVATE LibGL_ShaderProgram)
+                      PUBLIC  LibGL_ShaderProgram
+                      PRIVATE LibCommon_DoAfterScope)
