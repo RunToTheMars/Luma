@@ -16,40 +16,40 @@ enum class ShaderType
 class Shader
 {
 public:
+  Shader (ShaderType type, int id) noexcept;
   Shader (const Shader &) = delete;
-  Shader (Shader &&);
+  Shader (Shader &&) noexcept;
+  ~Shader () noexcept;
 
   Shader &operator= (const Shader &) = delete;
-  Shader &operator= (Shader &&);
+  Shader &operator= (Shader &&) noexcept;
 
-  ~Shader ();
+  int id () const & noexcept;
+  int id () && noexcept;
 
-  int id () const { return m_id; }
-  ShaderType type () const { return m_type; }
-
-  bool isValid () const;
+  ShaderType type () const noexcept;
 
 private:
-  friend class ShaderCompilerImpl;
-  Shader (ShaderType type, int id);
-
-  ShaderType m_type;
-  int m_id = 0;
+  ShaderType mType;
+  int mId = 0;
 };
 
 class ShaderCompilerImpl;
 class ShaderCompiler
 {
 public:
-  ShaderCompiler ();
-  ~ShaderCompiler ();
+  ShaderCompiler () noexcept;
+  ShaderCompiler (const ShaderCompiler &) = delete;
+  ShaderCompiler (ShaderCompiler &&) noexcept;
+  ~ShaderCompiler () noexcept;
 
-  std::optional<Shader> compileCode (const char *code, ShaderType type);
-  std::optional<Shader> compileFile (const char *path, ShaderType type);
+  ShaderCompiler &operator= (const ShaderCompiler &) = delete;
+  ShaderCompiler &operator= (ShaderCompiler &&) noexcept;
 
-  const char *compileError () const;
+  std::optional<Shader> compileCode (const char *code, ShaderType type) noexcept;
+  const char *compileError () const noexcept;
 
 private:
-  std::unique_ptr<ShaderCompilerImpl> m_pimpl;
+  std::unique_ptr<char[]> mCompileError;
 };
 }  // namespace GL

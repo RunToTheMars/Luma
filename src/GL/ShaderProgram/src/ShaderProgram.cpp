@@ -8,38 +8,68 @@
 namespace GL
 {
 //-----------------------------------------------------------------------------------------
-ShaderProgram::ShaderProgram (int id) : m_id (id) {}
-ShaderProgram::~ShaderProgram () = default;
+ShaderProgram::ShaderProgram (int id) noexcept : mId (id) {}
+ShaderProgram::ShaderProgram (ShaderProgram &&other) noexcept : mId (other.mId)
+{
+  other.mId = 0;
+}
+ShaderProgram::~ShaderProgram () noexcept
+{
+  if (mId)
+    glDeleteProgram (mId);
+}
 
-ShaderProgramBinder ShaderProgram::bind () { return ShaderProgramBinder (id ()); }
+ShaderProgram &ShaderProgram::operator= (ShaderProgram &&rhs) noexcept
+{
+  if (mId)
+    glDeleteProgram (mId);
 
-int ShaderProgram::uniform_location (const char *name) const { return glGetUniformLocation (m_id, name); }
-int ShaderProgram::attribute_location (const char *name) const { return glGetAttribLocation (m_id, name); }
+  mId = std::move (rhs).id ();
+  return *this;
+}
+
+int ShaderProgram::id () const & noexcept
+{
+  return mId;
+}
+
+int ShaderProgram::id () && noexcept
+{
+  int idCopy = mId;
+  mId = 0;
+  return idCopy;
+}
+
+int ShaderProgram::uniformLocation (const char *name) const noexcept
+{
+  return glGetUniformLocation (mId, name);
+}
+
+int ShaderProgram::attributeLocation (const char *name) const noexcept
+{
+  return glGetAttribLocation (mId, name);
+}
+
+ShaderProgramBinder ShaderProgram::bind () const noexcept
+{
+  return ShaderProgramBinder (id ());
+}
 
 //-----------------------------------------------------------------------------------------
 
-class ShaderProgramLinkerImpl
+ShaderProgramLinker::ShaderProgramLinker () noexcept
 {
-public:
-  void add (const Shader &shader);
-  std::optional<ShaderProgram> link ();
+}
 
-  const char *linkError () const { return m_linkError.get (); }
-
-private:
-  std::vector<int> m_shaders;
-  std::unique_ptr<char[]> m_linkError;
-};
-
-void ShaderProgramLinkerImpl::add (const Shader &shader) { m_shaders.emplace_back (shader.id ()); }
-std::optional<ShaderProgram> ShaderProgramLinkerImpl::link ()
+ShaderProgramLinker::~ShaderProgramLinker () noexcept
 {
-  int id = glCreateProgram ();
-  for (int shader_id : m_shaders)
-    glAttachShader (id, shader_id);
+}
 
-  m_shaders.clear ();
-
+namespace
+{
+std::optional<ShaderProgram> tryLink (int id, std::unique_ptr<char[]> &linkError) noexcept
+{
+  ShaderProgram shaderProgram (id);
   glLinkProgram (id);
 
   int success;
@@ -47,75 +77,129 @@ std::optional<ShaderProgram> ShaderProgramLinkerImpl::link ()
   if (!success)
     {
       constexpr int linkErrorBufSize = 512;
-      if (!m_linkError)
-        m_linkError = std::make_unique<char[]> (linkErrorBufSize);
+      if (!linkError)
+        linkError = std::make_unique<char[]> (linkErrorBufSize);
 
-      glGetProgramInfoLog (id, linkErrorBufSize, NULL, m_linkError.get ());
-      glDeleteProgram (id);
+      glGetProgramInfoLog (id, linkErrorBufSize, NULL, linkError.get ());
       return std::nullopt;
     }
 
-  return GL::ShaderProgram (id);
+  return shaderProgram;
+}
 }
 
-//-----------------------------------------------------------------------------------------
-
-ShaderProgramLinker::ShaderProgramLinker () : m_pimpl (new ShaderProgramLinkerImpl) {}
-ShaderProgramLinker::~ShaderProgramLinker () { delete m_pimpl; }
-
-void ShaderProgramLinker::add (const Shader &shader) { m_pimpl->add (shader); }
-std::optional<ShaderProgram> ShaderProgramLinker::link () { return m_pimpl->link (); }
-const char *ShaderProgramLinker::linkError () const { return m_pimpl->linkError (); }
-
-//-----------------------------------------------------------------------------------------
-
-ShaderProgramBinder::ShaderProgramBinder(int id): m_id (id)
+std::optional<ShaderProgram> ShaderProgramLinker::link (std::initializer_list<int> shaderIds) noexcept
 {
-  glUseProgram (id);
+  int id = glCreateProgram ();
+  for (int shaderId : shaderIds)
+    glAttachShader (id, shaderId);
+
+  return tryLink (id, mLinkError);
 }
 
-ShaderProgramBinder::~ShaderProgramBinder()
+std::optional<ShaderProgram> ShaderProgramLinker::link (std::initializer_list<Shader> shaders) noexcept
+{
+  int id = glCreateProgram ();
+  for (const Shader &shader : shaders)
+    glAttachShader (id, shader.id ());
+
+  return tryLink (id, mLinkError);
+}
+
+const char *ShaderProgramLinker::linkError () const noexcept
+{
+  return mLinkError.get ();
+}
+
+//-----------------------------------------------------------------------------------------
+
+ShaderProgramBinder::ShaderProgramBinder(int id) noexcept : mId (id)
+{
+  glUseProgram (mId);
+}
+
+ShaderProgramBinder::ShaderProgramBinder(const ShaderProgram &shaderProgram) noexcept: ShaderProgramBinder (shaderProgram.id ())
+{
+}
+
+ShaderProgramBinder::~ShaderProgramBinder() noexcept
 {
   glUseProgram (0);
 }
 
-static int uniform_location_unsafe (int id, const char *name)
+void ShaderProgramBinder::setUniform (int location, float x) noexcept
 {
-  int location = glGetUniformLocation (id, name);
-  if (location <= -1)
-    throw std::runtime_error ("Invalid uniform!");
-
-  return location;
+  glUniform1f (location, x);
 }
 
-void ShaderProgramBinder::setUniform (int location, float x, float y) { glUniform2f (location, x, y); }
-void ShaderProgramBinder::setUniform (const char *name, float x, float y) { glUniform2f (uniform_location_unsafe (m_id, name), x, y); }
-
-void ShaderProgramBinder::setUniform (int location, float x, float y, float z) { glUniform3f (location, x, y, z); }
-void ShaderProgramBinder::setUniform (const char *name, float x, float y, float z)
+void ShaderProgramBinder::setUniform (int location, float x, float y) noexcept
 {
-  glUniform3f (uniform_location_unsafe (m_id, name), x, y, z);
+  glUniform2f (location, x, y);
 }
 
-void ShaderProgramBinder::setUniform (int location, float x, float y, float z, float w) { glUniform4f (location, x, y, z, w); }
-void ShaderProgramBinder::setUniform (const char *name, float x, float y, float z, float w)
+void ShaderProgramBinder::setUniform (int location, float x, float y, float z) noexcept
 {
-  glUniform4f (uniform_location_unsafe (m_id, name), x, y, z, w);
+  glUniform3f (location, x, y, z);
 }
 
-void ShaderProgramBinder::setUniform (int location, int x) { glUniform1i (location, x); }
-void ShaderProgramBinder::setUniform (const char *name, int x) { glUniform1i (uniform_location_unsafe (m_id, name), x); }
-
-void ShaderProgramBinder::setUniform (int location, unsigned int x) { glUniform1ui (location, x); }
-void ShaderProgramBinder::setUniform (const char *name, unsigned int x) { glUniform1ui (uniform_location_unsafe (m_id, name), x); }
-
-void ShaderProgramBinder::setUniformMatrix4 (int location, const float *m)
+void ShaderProgramBinder::setUniform (int location, float x, float y, float z, float w) noexcept
 {
-  glUniformMatrix4fv (location, 1 /*count*/, true /*transpose*/, m);
+  glUniform4f (location, x, y, z, w);
 }
-void ShaderProgramBinder::setUniformMatrix4 (const char *name, const float *m)
+
+void ShaderProgramBinder::setUniform (int location, int x) noexcept
 {
-  glUniformMatrix4fv (uniform_location_unsafe (m_id, name), 1 /*count*/, true /*transpose*/, m);
+  glUniform1i (location, x);
+}
+
+void ShaderProgramBinder::setUniform (int location, int x, int y) noexcept
+{
+  glUniform2i (location, x, y);
+}
+
+void ShaderProgramBinder::setUniform (int location, int x, int y, int z) noexcept
+{
+  glUniform3i (location, x, y, z);
+}
+
+void ShaderProgramBinder::setUniform (int location, int x, int y, int z, int w) noexcept
+{
+  glUniform4i (location, x, y, z, w);
+}
+
+void ShaderProgramBinder::setUniform (int location, unsigned int x) noexcept
+{
+  glUniform1ui (location, x);
+}
+
+void ShaderProgramBinder::setUniform (int location, unsigned int x, unsigned int y) noexcept
+{
+  glUniform2ui (location, x, y);
+}
+
+void ShaderProgramBinder::setUniform (int location, unsigned int x, unsigned int y, unsigned int z) noexcept
+{
+  glUniform3ui (location, x, y, z);
+}
+
+void ShaderProgramBinder::setUniform (int location, unsigned int x, unsigned int y, unsigned int z, unsigned int w) noexcept
+{
+  glUniform4ui (location, x, y, z, w);
+}
+
+void ShaderProgramBinder::setUniformMatrix2 (int location, const float *m, bool transpose, int count) noexcept
+{
+  glUniformMatrix2fv (location, count, transpose, m);
+}
+
+void ShaderProgramBinder::setUniformMatrix3 (int location, const float *m, bool transpose, int count) noexcept
+{
+  glUniformMatrix3fv (location, count, transpose, m);
+}
+
+void ShaderProgramBinder::setUniformMatrix4 (int location, const float *m, bool transpose, int count) noexcept
+{
+  glUniformMatrix4fv (location, count, transpose, m);
 }
 
 //-----------------------------------------------------------------------------------------

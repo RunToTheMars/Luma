@@ -1,84 +1,82 @@
 #pragma once
 
+#include <initializer_list>
+#include <memory>
 #include <optional>
 
 namespace GL
 {
-class Shader;
 class ShaderProgramBinder;
-
 class ShaderProgram
 {
 public:
-  ~ShaderProgram ();
+  ShaderProgram (int id) noexcept;
+  ShaderProgram (const ShaderProgram &) = delete;
+  ShaderProgram (ShaderProgram &&) noexcept;
+  ~ShaderProgram () noexcept;
 
-  int id () const { return m_id; }
+  ShaderProgram &operator= (const ShaderProgram &) = delete;
+  ShaderProgram &operator= (ShaderProgram &&) noexcept;
 
-  ShaderProgramBinder bind ();
+  int id () const & noexcept;
+  int id () && noexcept;
 
-  int uniform_location (const char *name) const;
-  int attribute_location (const char *name) const;
+  int uniformLocation (const char *name) const noexcept;
+  int attributeLocation (const char *name) const noexcept;
 
-private:
-  friend class ShaderProgramLinkerImpl;
+  ShaderProgramBinder bind () const noexcept;
 
-  ShaderProgram (int id);
-  int m_id;
+private:   
+  int mId;
 };
 
-class ShaderProgramLinkerImpl;
+class Shader;
 class ShaderProgramLinker
 {
 public:
-  ShaderProgramLinker ();
-  ~ShaderProgramLinker ();
+  ShaderProgramLinker () noexcept;
+  ~ShaderProgramLinker () noexcept;
 
-  void add (const Shader &shader);
-  std::optional<ShaderProgram> link ();
-
-  const char *linkError () const;
+  std::optional<ShaderProgram> link (std::initializer_list<int> shaderIds) noexcept;
+  std::optional<ShaderProgram> link (std::initializer_list<Shader> shaders) noexcept;
+  const char *linkError () const noexcept;
 
 private:
-  ShaderProgramLinkerImpl *m_pimpl = nullptr;
+  std::unique_ptr<char[]> mLinkError;
 };
 
 class ShaderProgramBinder
 {
 public:
-  ~ShaderProgramBinder ();
-
+  ShaderProgramBinder (int id) noexcept;
+  ShaderProgramBinder (const ShaderProgram &shaderProgram) noexcept;
   ShaderProgramBinder (const ShaderProgramBinder &) = delete;
-  ShaderProgramBinder &operator= (const ShaderProgramBinder &) = delete;
-
   ShaderProgramBinder (ShaderProgramBinder &&) = delete;
+  ~ShaderProgramBinder () noexcept;
+
+  ShaderProgramBinder &operator= (const ShaderProgramBinder &) = delete;
   ShaderProgramBinder &operator= (ShaderProgramBinder &&) = delete;
 
-  int uniform_location (const char *name) const;
+  void setUniform (int location, float x) noexcept;
+  void setUniform (int location, float x, float y) noexcept;
+  void setUniform (int location, float x, float y, float z) noexcept;
+  void setUniform (int location, float x, float y, float z, float w) noexcept;
 
-  void setUniform (int location, float x, float y);
-  void setUniform (const char *name, float x, float y);
+  void setUniform (int location, int x) noexcept;
+  void setUniform (int location, int x, int y) noexcept;
+  void setUniform (int location, int x, int y, int z) noexcept;
+  void setUniform (int location, int x, int y, int z, int w) noexcept;
 
-  void setUniform (int location, float x, float y, float z);
-  void setUniform (const char *name, float x, float y, float z);
+  void setUniform (int location, unsigned int x) noexcept;
+  void setUniform (int location, unsigned int x, unsigned int y) noexcept;
+  void setUniform (int location, unsigned int x, unsigned int y, unsigned int z) noexcept;
+  void setUniform (int location, unsigned int x, unsigned int y, unsigned int z, unsigned int w) noexcept;
 
-  void setUniform (int location, float x, float y, float z, float w);
-  void setUniform (const char *name, float x, float y, float z, float w);
-
-  void setUniform (int location, int x);
-  void setUniform (const char *name, int x);
-
-  void setUniform (int location, unsigned int x);
-  void setUniform (const char *name, unsigned int x);
-
-  void setUniformMatrix4(int location, const float *m);
-  void setUniformMatrix4 (const char *name, const float *m);
-
-  int attribute_location (const char *name) const;
+  void setUniformMatrix2 (int location, const float *m, bool transpose = true, int count = 1) noexcept;
+  void setUniformMatrix3 (int location, const float *m, bool transpose = true, int count = 1) noexcept;
+  void setUniformMatrix4 (int location, const float *m, bool transpose = true, int count = 1) noexcept;
 
 private:
-  friend class ShaderProgram;
-  ShaderProgramBinder (int id);
-
-  int m_id;
+  int mId;
 };
 }

@@ -254,13 +254,10 @@ std::optional<GL::ShaderProgram> createShaderProgram ()
     return std::nullopt;
 
   GL::ShaderProgramLinker linker;
-  linker.add (*vShader);
-  linker.add (*gShader);
-  linker.add (*fShader);
-  std::optional<GL::ShaderProgram> program = linker.link ();
+  std::optional<GL::ShaderProgram> program = linker.link ({vShader->id (), gShader->id (), fShader->id ()});
 
   if (!program)
-      fprintf (stderr, "Shader Program link problem:\n%s", linker.linkError ());
+    fprintf (stderr, "Shader Program link problem:\n%s", linker.linkError ());
 
   return program;
 }
@@ -270,10 +267,10 @@ WordImpl::WordImpl ()
   m_program = createShaderProgram ();
   if (m_program)
   {
-      m_uniformGLPositionLoc      = m_program->uniform_location ("u_gl_position");
-      m_uniformColorLoc           = m_program->uniform_location ( "u_color");
-      m_uniformBackgroundColorLoc = m_program->uniform_location ("u_background_color");
-      m_uniformGLSizeLoc          = m_program->uniform_location ("u_gl_glyph_size");
+      m_uniformGLPositionLoc      = m_program->uniformLocation ("u_gl_position");
+      m_uniformColorLoc           = m_program->uniformLocation ( "u_color");
+      m_uniformBackgroundColorLoc = m_program->uniformLocation ("u_background_color");
+      m_uniformGLSizeLoc          = m_program->uniformLocation ("u_gl_glyph_size");
   }
   else
   {

@@ -1,13 +1,11 @@
 #include "GL/Shader.h"
 #include <GL/glew.h> /* for OpenGL */
 #include "stdio.h" /* for printing error */
-#include <string>  /* for reading shader program from disk */
-#include <fstream> /* for reading shader program from disk */
-#include <sstream> /* for reading shader program from disk */
+#include <stdexcept>
 
 namespace
 {
-int to_gl_enum (GL::ShaderType type)
+int toGLEnum (GL::ShaderType type)
 {
   switch (type)
     {
@@ -24,37 +22,58 @@ int to_gl_enum (GL::ShaderType type)
 namespace GL
 {
 //-----------------------------------------------------------------------------------------
-Shader::Shader (ShaderType _type, int _id) : m_type (_type), m_id (_id) {}
-Shader::Shader (Shader &&shader) : m_type (shader.m_type), m_id (shader.m_id) { shader.m_id = 0; }
-Shader &Shader::operator= (Shader &&rhs)
+Shader::Shader (ShaderType _type, int _id) noexcept : mType (_type), mId (_id)
 {
-  m_type = rhs.m_type;
-  m_id = rhs.m_id;
-  rhs.m_id = 0;
+}
+
+Shader::Shader (Shader &&shader) noexcept : mType (shader.mType), mId (shader.mId)
+{
+  shader.mId = 0;
+}
+
+Shader::~Shader () noexcept
+{
+    if (mId)
+        glDeleteShader (mId);
+}
+
+Shader &Shader::operator= (Shader &&rhs) noexcept
+{
+  if (mId)
+    glDeleteShader (mId);
+
+  mType = rhs.mType;
+  mId = std::move (rhs).id ();
+
   return *this;
 }
-Shader::~Shader ()
+
+
+int Shader::id () const & noexcept
 {
-  if (m_id)
-    glDeleteShader (m_id);
+  return mId;
 }
+
+int Shader::id () && noexcept
+{
+  int idCopy = mId;
+  mId = 0;
+  return idCopy;
+}
+
+ShaderType Shader::type () const noexcept
+{
+  return mType;
+}
+
 //-----------------------------------------------------------------------------------------
 
-class ShaderCompilerImpl
+ShaderCompiler::ShaderCompiler () noexcept = default;
+ShaderCompiler::~ShaderCompiler () noexcept = default;
+
+std::optional<Shader> ShaderCompiler::compileCode (const char *code, ShaderType type) noexcept
 {
-public:
-  std::optional<Shader> compileCode (const char *code, ShaderType type);
-  std::optional<Shader> compileFile (const char *path, ShaderType type);
-
-  const char *compileError () const { return m_compileError.get (); }
-
-private:
-  std::unique_ptr<char[]> m_compileError;
-};
-
-std::optional<Shader> ShaderCompilerImpl::compileCode (const char* code, ShaderType type)
-{
-  int id = glCreateShader (to_gl_enum (type));
+  int id = glCreateShader (toGLEnum (type));
   glShaderSource (id, 1, &code, NULL);
   glCompileShader (id);
 
@@ -63,10 +82,10 @@ std::optional<Shader> ShaderCompilerImpl::compileCode (const char* code, ShaderT
   if (!success)
     {
       constexpr int compileErrorBufSize = 512;
-      if (!m_compileError)
-        m_compileError = std::make_unique<char[]> (compileErrorBufSize);
+      if (!mCompileError)
+        mCompileError = std::make_unique<char[]> (compileErrorBufSize);
 
-      glGetShaderInfoLog (id, compileErrorBufSize, NULL, m_compileError.get ());
+      glGetShaderInfoLog (id, compileErrorBufSize, NULL, mCompileError.get ());
       glDeleteShader (id);
       return std::nullopt;
     }
@@ -74,27 +93,10 @@ std::optional<Shader> ShaderCompilerImpl::compileCode (const char* code, ShaderT
   return GL::Shader (type, id);
 }
 
-std::optional<Shader> ShaderCompilerImpl::compileFile (const char* path, ShaderType type)
+const char *ShaderCompiler::compileError () const noexcept
 {
-  std::ifstream ifstream;
-  ifstream.open (path);
-
-  if (!ifstream.good ())
-    throw std::runtime_error ("\"" + std::string (path) + "\"" +  " is invalid path of shader!");
-
-  std::stringstream sstream;
-  sstream << ifstream.rdbuf ();
-  std::string code = std::move (sstream).str ();
-  return compileCode (code.c_str (), type);
+  return mCompileError.get ();
 }
-
-//-----------------------------------------------------------------------------------------
-
-ShaderCompiler::ShaderCompiler () : m_pimpl (std::make_unique<ShaderCompilerImpl> ()) {}
-ShaderCompiler::~ShaderCompiler () = default;
-std::optional<Shader> ShaderCompiler::compileCode (const char *code, ShaderType type) { return m_pimpl->compileCode (code, type); }
-std::optional<Shader> ShaderCompiler::compileFile (const char *path, ShaderType type) { return m_pimpl->compileFile (path, type); }
-const char *ShaderCompiler::compileError () const { return m_pimpl->compileError (); }
 
 //-----------------------------------------------------------------------------------------
 }  // namespace GL
