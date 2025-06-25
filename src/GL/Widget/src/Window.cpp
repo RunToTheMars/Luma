@@ -154,13 +154,12 @@ void Window::keyEvent (const KeyEvent & /*event*/) {}
 void Window::mouseEvent (const MouseEvent & /*event*/) {}
 void Window::exec ()
 {
-  glfwSwapInterval (0);
   glfwMakeContextCurrent (m_pimpl->window);
+  glfwSwapInterval (0);
   init ();
 
   while (!glfwWindowShouldClose (m_pimpl->window))
     {
-      glfwMakeContextCurrent (m_pimpl->window);
       renderEvent ();
       glfwSwapBuffers (m_pimpl->window);
       glfwPollEvents ();
