@@ -3,61 +3,32 @@
 #include "GL/ShaderProgram.h"
 #include <GL/glew.h> /* for OpenGL */
 #include <cstring>
+#include "Common/DoAfterScope.h"
 #include <memory>
-#include <stdio.h>
 
-namespace
+namespace GL
 {
-class WordImpl
+namespace ASCII
 {
-public:
-  static WordImpl &get_instance ();
-
-  bool isEnabled () const { return m_program.has_value (); }
-  GL::ShaderProgram &program () { return *m_program; }
-
-  int uniformGLPositionLoc      () const { return m_uniformGLPositionLoc; }
-  int uniformColorLoc           () const { return m_uniformColorLoc; }
-  int uniformBackgroundColorLoc () const { return m_uniformBackgroundColorLoc; }
-  int uniformGLSizeLoc          () const { return m_uniformGLSizeLoc; }
-
-private:
-  WordImpl ();
-
-  std::optional<GL::ShaderProgram> m_program;
-  int m_uniformGLPositionLoc = 0;
-  int m_uniformColorLoc = 0;
-  int m_uniformBackgroundColorLoc = 0;
-  int m_uniformGLSizeLoc = 0;
-
-public:
-  float m_GLPosition[3] = {0.f, 0.f, 0.f};
-  float m_color[4] = {0.f, 0.f, 0.f, 1.f};            /// black
-  float m_backgroundColor[4] = {0.f, 0.f, 0.f, 0.f};  /// black transparent
-  float m_GLSize[2] = {0.1f, 0.1f};
-};
-
-WordImpl &WordImpl::get_instance ()
+namespace v130
 {
-  static WordImpl impl;
-  return impl;
-}
+Renderer::Renderer () noexcept = default;
+Renderer::~Renderer () noexcept = default;
 
-std::optional<GL::Shader> createShader (const char *code, GL::ShaderType type)
+void Renderer::initialize () noexcept
 {
+  if (mIsInitialized)
+    return;
+
+  mShaderProgram = std::nullopt;
+  mError.reset ();
+
+  DO_AFTER_SCOPE (mIsInitialized = true);
+
   GL::ShaderCompiler compiler;
-  std::optional<GL::Shader> shader = compiler.compileCode (code, type);
 
-  if (!shader)
-    fprintf (stderr, "Vertex Shader compilation problem:\n%s", compiler.compileError ());
-
-  return shader;
-}
-
-std::optional<GL::ShaderProgram> createShaderProgram ()
-{
-  std::optional<GL::Shader> vShader = createShader (
-      "#version 330                                                                                              \n"
+  std::optional<GL::Shader> vShader = compiler.compileSource (
+      "#version 130                                                                                              \n"
       "                                                                                                          \n"
       "in uint a_ascii_code; // vanila vertex attribute: ascii code (belongs to [0, 255])                        \n"
       "                                                                                                          \n"
@@ -83,13 +54,16 @@ std::optional<GL::ShaderProgram> createShaderProgram ()
       "                      1.);                                                                                \n"
       "}                                                                                                         \n"
       "                                                                                                          \n",
-      GL::ShaderType::Vertex);
+      GL::Shader::Type::Vertex);
 
   if (!vShader)
-    return std::nullopt;
+    {
+      mError = compiler.takeCompileError ();
+      return;
+    }
 
-  std::optional<GL::Shader> fShader = createShader (
-      "#version 330                                                                                  \n"
+  std::optional<GL::Shader> fShader = compiler.compileSource (
+      "#version 130                                                                                                 \n"
       "                                                                                                             \n"
       "flat   in uint p_ascii_code;  // primitive attribute: ascii code (belongs to [0, 255])                       \n"
       "smooth in vec2 f_glyph_uv;    // fragment attribute: UV texels coords                                        \n"
@@ -218,62 +192,91 @@ std::optional<GL::ShaderProgram> createShaderProgram ()
       "{                                                                                                            \n"
       "    return __pixel_in_glyph (uvec2 (floor (glyph_uv)), ascii_code);                                          \n"
       "}                                                                                                            \n",
-      GL::ShaderType::Fragment);
+      GL::Shader::Type::Fragment);
 
   if (!fShader)
-    return std::nullopt;
+    {
+      mError = compiler.takeCompileError ();
+      return;
+    }
 
   GL::ShaderProgramLinker linker;
-  std::optional<GL::ShaderProgram> program = linker.link ({vShader->id (), fShader->id ()});
+  mShaderProgram = linker.link ({&vShader.value (), &fShader.value ()});
 
-  if (!program)
-    fprintf (stderr, "Shader Program link problem:\n%s", linker.linkError ());
-
-  return program;
-}
-
-WordImpl::WordImpl ()
-{
-  m_program = createShaderProgram ();
-  if (m_program)
+  if (!mShaderProgram)
     {
-      m_uniformGLPositionLoc      = m_program->uniformLocation ("u_gl_position");
-      m_uniformColorLoc           = m_program->uniformLocation ("u_color");
-      m_uniformBackgroundColorLoc = m_program->uniformLocation ("u_background_color");
-      m_uniformGLSizeLoc          = m_program->uniformLocation ("u_gl_glyph_size");
+      mError = linker.takeLinkError ();
+      return;
     }
-  else
-    {
-      m_uniformGLPositionLoc      = -1;
-      m_uniformColorLoc           = -1;
-      m_uniformBackgroundColorLoc = -1;
-      m_uniformGLSizeLoc          = -1;
-    }
-}
+
+  mUniformPositionLoc        = mShaderProgram->uniformLocation ("u_gl_position");
+  mUniformColorLoc           = mShaderProgram->uniformLocation ("u_color");
+  mUniformBackgroundColorLoc = mShaderProgram->uniformLocation ("u_background_color");
+  mUniformSizeLoc            = mShaderProgram->uniformLocation ("u_gl_glyph_size");
+
+  mAttributeCodeLoc          = mShaderProgram->attributeLocation ("a_ascii_code");
 }
 
-namespace GL_ASCII
+bool Renderer::isInitialized () const noexcept
 {
-namespace v130
-{
-namespace Word
-{
-bool isEnabled () { return WordImpl::get_instance ().isEnabled (); }
-const float *position () { return WordImpl::get_instance ().m_GLPosition; }
-const float *color () { return WordImpl::get_instance ().m_color; }
-const float *backgroundColor () { return WordImpl::get_instance ().m_backgroundColor; }
+  return mIsInitialized;
+}
 
-SymbolsData::SymbolsData (const char *symbols): SymbolsData (symbols, strlen (symbols))
+void Renderer::clear () noexcept
+{
+  mShaderProgram = std::nullopt;
+  mIsInitialized = false;
+  mError.reset ();
+}
+
+bool Renderer::hasError () const noexcept
+{
+  return isInitialized () && !mShaderProgram.has_value ();
+}
+
+const std::unique_ptr<char[]> &Renderer::error () const noexcept
+{
+  return mError;
+}
+
+std::unique_ptr<char[]> &&Renderer::takeError () noexcept
+{
+  return std::move (mError);
+}
+
+const float *Renderer::position () const noexcept
+{
+  return mPosition;
+}
+
+const float *Renderer::color () const noexcept
+{
+  return mColor;
+}
+
+const float *Renderer::backgroundColor () const noexcept
+{
+  return mBackgroundColor;
+}
+
+const float *Renderer::size () const noexcept
+{
+  return mSize;
+}
+
+Renderer::Data::Data (const char *symbols) noexcept : Data (symbols, strlen (symbols))
 {
 }
-SymbolsData::SymbolsData (const char *symbols, unsigned int symbolsCount): m_symbolsCount (symbolsCount)
+
+Renderer::Data::Data (const char *symbols, unsigned int symbolsCount) noexcept: mSymbolsCount (symbolsCount)
 {
   unsigned int symbolsVBO;
-  glGenBuffers (1, &m_VBO);
-  glBindBuffer (GL_ARRAY_BUFFER, m_VBO);
-  unsigned int dataCount = 4 * symbolsCount;
+  glGenBuffers (1, &mVBO);
+
+  glBindBuffer (GL_ARRAY_BUFFER, mVBO);
+  unsigned int dataCount = 4 * mSymbolsCount;
   std::unique_ptr<char[]> data = std::make_unique<char[]> (dataCount);
-  for (unsigned int symbolIndex = 0; symbolIndex < symbolsCount; symbolIndex++)
+  for (unsigned int symbolIndex = 0; symbolIndex < mSymbolsCount; symbolIndex++)
     {
       char symbol = symbols[symbolIndex];
       data[4 * symbolIndex] = symbol;
@@ -281,73 +284,98 @@ SymbolsData::SymbolsData (const char *symbols, unsigned int symbolsCount): m_sym
       data[4 * symbolIndex + 2] = symbol;
       data[4 * symbolIndex + 3] = symbol;
     }
-
   glBufferData (GL_ARRAY_BUFFER, dataCount, data.get (), GL_STATIC_DRAW);
   glBindBuffer (GL_ARRAY_BUFFER, 0);
 }
 
-SymbolsData::~SymbolsData () { glDeleteBuffers (1, &m_VBO); }
-
-Binder::Binder (): m_internalBinder (WordImpl::get_instance ().program ().bind ())
+unsigned int Renderer::Data::VBO () const noexcept
 {
+  return mVBO;
 }
 
-Binder::~Binder () = default;
-
-Binder &Binder::setGLPosition (const float *pos) { return setGLPosition (pos[0], pos[1], pos[2]); }
-Binder &Binder::setGLPosition (float x, float y, float z)
+unsigned int Renderer::Data::symbolsCount () const noexcept
 {
-  glUniform3f (WordImpl::get_instance ().uniformGLPositionLoc (), x, y, z);
-  WordImpl::get_instance ().m_GLPosition[0] = x;
-  WordImpl::get_instance ().m_GLPosition[1] = y;
-  WordImpl::get_instance ().m_GLPosition[2] = z;
+  return mSymbolsCount;
+}
+
+Renderer::Data::~Data () noexcept
+{
+  glDeleteBuffers (1, &mVBO);
+}
+
+Renderer::Binder Renderer::bind (const GL::ShaderProgramBinderInterface &binderInterface) noexcept
+{
+  return Renderer::Binder (*this, binderInterface);
+}
+
+Renderer::Binder::Binder(const Renderer &renderer, const GL::ShaderProgramBinderInterface &binderInterface) noexcept
+    : mRenderer(renderer)
+    , mBinderInterface(binderInterface)
+{
+  mBinderInterface.bind (mRenderer.mShaderProgram.value ());
+}
+
+Renderer::Binder::~Binder () noexcept = default;
+
+Renderer::Binder &Renderer::Binder::setPosition (const float *pos) noexcept
+{
+  return setPosition (pos[0], pos[1], pos[2]);
+}
+
+Renderer::Binder &Renderer::Binder::setPosition (float x, float y, float z) noexcept
+{
+  mBinderInterface.setUniform (mRenderer.mUniformPositionLoc, x, y, z);
   return *this;
 }
 
-Binder &Binder::setColor (const float *color) { return setColor (color[0], color[1], color[2], color[3]); }
-Binder &Binder::setColor (float r, float g, float b, float a)
+Renderer::Binder &Renderer::Binder::setColor (const float *color) noexcept
 {
-  glUniform4f (WordImpl::get_instance ().uniformColorLoc (), r, g, b, a);
-  WordImpl::get_instance ().m_color[0] = r;
-  WordImpl::get_instance ().m_color[1] = g;
-  WordImpl::get_instance ().m_color[2] = b;
-  WordImpl::get_instance ().m_color[3] = a;
+  return setColor (color[0], color[1], color[2], color[3]);
+}
+
+Renderer::Binder &Renderer::Binder::setColor (float r, float g, float b, float a) noexcept
+{
+  mBinderInterface.setUniform (mRenderer.mUniformColorLoc, r, g, b, a);
   return *this;
 }
 
-Binder &Binder::setBackgroundColor (const float *color) { return setBackgroundColor (color[0], color[1], color[2], color[3]); }
-Binder &Binder::setBackgroundColor (float r, float g, float b, float a)
+Renderer::Binder &Renderer::Binder::setBackgroundColor (const float *color) noexcept
 {
-  glUniform4f (WordImpl::get_instance ().uniformBackgroundColorLoc (), r, g, b, a);
-  WordImpl::get_instance ().m_backgroundColor[0] = r;
-  WordImpl::get_instance ().m_backgroundColor[1] = g;
-  WordImpl::get_instance ().m_backgroundColor[2] = b;
-  WordImpl::get_instance ().m_backgroundColor[3] = a;
+  return setBackgroundColor (color[0], color[1], color[2], color[3]);
+}
+
+Renderer::Binder &Renderer::Binder::setBackgroundColor (float r, float g, float b, float a) noexcept
+{
+  mBinderInterface.setUniform (mRenderer.mUniformBackgroundColorLoc, r, g, b, a);
   return *this;
 }
 
-Binder &Binder::setGLSize (const float *size) { return setGLSize (size[0], size[1]); }
-Binder &Binder::setGLSize (float width, float height)
+Renderer::Binder &Renderer::Binder::setSize (const float *size) noexcept
 {
-  glUniform2f (WordImpl::get_instance ().uniformGLSizeLoc (), width, height);
-  WordImpl::get_instance ().m_GLSize[0] = width;
-  WordImpl::get_instance ().m_GLSize[1] = height;
+  return setSize (size[0], size[1]);
+}
+
+Renderer::Binder &Renderer::Binder::setSize (float width, float height) noexcept
+{
+  mBinderInterface.setUniform (mRenderer.mUniformSizeLoc, width, height);
   return *this;
 }
 
-Binder &Binder::draw (const SymbolsData &data)
+Renderer::Binder &Renderer::Binder::draw (const Data &data) noexcept
 {
   glBindBuffer (GL_ARRAY_BUFFER, data.VBO ());
 
-  glVertexAttribIPointer (0, 1, GL_UNSIGNED_BYTE, 0, (void *) nullptr);
+  glVertexAttribIPointer (mRenderer.mAttributeCodeLoc, 1 /*size*/, GL_UNSIGNED_BYTE, 0, (void *) nullptr);
 
   glEnableVertexAttribArray (0);
   glDrawArrays (GL_QUADS /*mode*/, 0 /* first */, 4 * data.symbolsCount () /* count */);
   glDisableVertexAttribArray (0);
+
   glBindBuffer (GL_ARRAY_BUFFER, 0);
 
   return *this;
 }
+
 }
 }
 }

@@ -1,16 +1,16 @@
 #pragma once
 
-#include <initializer_list>
 #include <memory>
 #include <optional>
 
 namespace GL
 {
-class ShaderProgramBinder;
+class ShaderProgramLinker;
+class ShaderProgramBinderInterface;
+
 class ShaderProgram
 {
 public:
-  ShaderProgram (int id) noexcept;
   ShaderProgram (const ShaderProgram &) = delete;
   ShaderProgram (ShaderProgram &&) noexcept;
   ~ShaderProgram () noexcept;
@@ -18,15 +18,15 @@ public:
   ShaderProgram &operator= (const ShaderProgram &) = delete;
   ShaderProgram &operator= (ShaderProgram &&) noexcept;
 
-  int id () const & noexcept;
-  int id () && noexcept;
-
   int uniformLocation (const char *name) const noexcept;
   int attributeLocation (const char *name) const noexcept;
 
-  ShaderProgramBinder bind () const noexcept;
+private:
+  friend class GL::ShaderProgramLinker;
+  friend class GL::ShaderProgramBinderInterface;
 
-private:   
+  ShaderProgram (int id) noexcept;
+
   int mId;
 };
 
@@ -37,45 +37,70 @@ public:
   ShaderProgramLinker () noexcept;
   ~ShaderProgramLinker () noexcept;
 
-  std::optional<ShaderProgram> link (std::initializer_list<int> shaderIds) noexcept;
-  const char *linkError () const noexcept;
+  std::optional<ShaderProgram> link (std::initializer_list<const Shader *> shaders) noexcept;
+
+  const std::unique_ptr<char[]> &linkError () const noexcept;
+  std::unique_ptr<char[]> &&takeLinkError () noexcept;
 
 private:
   std::unique_ptr<char[]> mLinkError;
 };
 
-class ShaderProgramBinder
+class ShaderProgramBinderInterface
+{
+protected:
+  ShaderProgramBinderInterface () noexcept;
+  ~ShaderProgramBinderInterface () noexcept;
+
+public:
+  const ShaderProgramBinderInterface &bind (const ShaderProgram &) const noexcept;
+
+  const ShaderProgramBinderInterface &setUniform (int location, float x) const noexcept;
+  const ShaderProgramBinderInterface &setUniform (int location, float x, float y) const noexcept;
+  const ShaderProgramBinderInterface &setUniform (int location, float x, float y, float z) const noexcept;
+  const ShaderProgramBinderInterface &setUniform (int location, float x, float y, float z, float w) const noexcept;
+
+  const ShaderProgramBinderInterface &setUniform (int location, int x) const noexcept;
+  const ShaderProgramBinderInterface &setUniform (int location, int x, int y) const noexcept;
+  const ShaderProgramBinderInterface &setUniform (int location, int x, int y, int z) const noexcept;
+  const ShaderProgramBinderInterface &setUniform (int location, int x, int y, int z, int w) const noexcept;
+
+  const ShaderProgramBinderInterface &setUniform (int location, unsigned int x) const noexcept;
+  const ShaderProgramBinderInterface &setUniform (int location, unsigned int x, unsigned int y) const noexcept;
+  const ShaderProgramBinderInterface &setUniform (int location, unsigned int x, unsigned int y, unsigned int z) const noexcept;
+  const ShaderProgramBinderInterface &setUniform (int location, unsigned int x, unsigned int y, unsigned int z, unsigned int w) const noexcept;
+
+  const ShaderProgramBinderInterface &setUniformMatrix2 (int location, const float *m, bool transpose = true, int count = 1) const noexcept;
+  const ShaderProgramBinderInterface &setUniformMatrix3 (int location, const float *m, bool transpose = true, int count = 1) const noexcept;
+  const ShaderProgramBinderInterface &setUniformMatrix4 (int location, const float *m, bool transpose = true, int count = 1) const noexcept;
+};
+
+class ShaderProgramBinderRestore : public ShaderProgramBinderInterface
 {
 public:
-  ShaderProgramBinder (int id) noexcept;
-  ShaderProgramBinder (const ShaderProgram &shaderProgram) noexcept;
-  ShaderProgramBinder (const ShaderProgramBinder &) = delete;
-  ShaderProgramBinder (ShaderProgramBinder &&) = delete;
-  ~ShaderProgramBinder () noexcept;
+  ShaderProgramBinderRestore () noexcept;
+  ShaderProgramBinderRestore (const ShaderProgram &shaderProgram) noexcept;
+  ShaderProgramBinderRestore (const ShaderProgramBinderRestore &) = delete;
+  ShaderProgramBinderRestore (ShaderProgramBinderRestore &&) = delete;
+  ~ShaderProgramBinderRestore () noexcept;
 
-  ShaderProgramBinder &operator= (const ShaderProgramBinder &) = delete;
-  ShaderProgramBinder &operator= (ShaderProgramBinder &&) = delete;
-
-  ShaderProgramBinder &setUniform (int location, float x) noexcept;
-  ShaderProgramBinder &setUniform (int location, float x, float y) noexcept;
-  ShaderProgramBinder &setUniform (int location, float x, float y, float z) noexcept;
-  ShaderProgramBinder &setUniform (int location, float x, float y, float z, float w) noexcept;
-
-  ShaderProgramBinder &setUniform (int location, int x) noexcept;
-  ShaderProgramBinder &setUniform (int location, int x, int y) noexcept;
-  ShaderProgramBinder &setUniform (int location, int x, int y, int z) noexcept;
-  ShaderProgramBinder &setUniform (int location, int x, int y, int z, int w) noexcept;
-
-  ShaderProgramBinder &setUniform (int location, unsigned int x) noexcept;
-  ShaderProgramBinder &setUniform (int location, unsigned int x, unsigned int y) noexcept;
-  ShaderProgramBinder &setUniform (int location, unsigned int x, unsigned int y, unsigned int z) noexcept;
-  ShaderProgramBinder &setUniform (int location, unsigned int x, unsigned int y, unsigned int z, unsigned int w) noexcept;
-
-  ShaderProgramBinder &setUniformMatrix2 (int location, const float *m, bool transpose = true, int count = 1) noexcept;
-  ShaderProgramBinder &setUniformMatrix3 (int location, const float *m, bool transpose = true, int count = 1) noexcept;
-  ShaderProgramBinder &setUniformMatrix4 (int location, const float *m, bool transpose = true, int count = 1) noexcept;
+  ShaderProgramBinderRestore &operator= (const ShaderProgramBinderRestore &) = delete;
+  ShaderProgramBinderRestore &operator= (ShaderProgramBinderRestore &&) = delete;
 
 private:
-  int mId;
+  int mRestoreId;
+};
+
+class ShaderProgramBinderUnsafe : public ShaderProgramBinderInterface
+{
+public:
+  ShaderProgramBinderUnsafe () noexcept;
+  ShaderProgramBinderUnsafe (const ShaderProgram &shaderProgram) noexcept;
+  ShaderProgramBinderUnsafe (const ShaderProgramBinderUnsafe &) = delete;
+  ShaderProgramBinderUnsafe (ShaderProgramBinderUnsafe &&) = delete;
+  ~ShaderProgramBinderUnsafe () noexcept;
+
+  ShaderProgramBinderUnsafe &operator= (const ShaderProgramBinderUnsafe &) = delete;
+  ShaderProgramBinderUnsafe &operator= (ShaderProgramBinderUnsafe &&) = delete;
 };
 }

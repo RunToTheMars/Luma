@@ -5,13 +5,13 @@
 
 namespace
 {
-int toGLEnum (GL::ShaderType type)
+int toGLEnum (GL::Shader::Type type)
 {
   switch (type)
     {
-      case GL::ShaderType::Vertex  : return GL_VERTEX_SHADER;
-      case GL::ShaderType::Geometry: return GL_GEOMETRY_SHADER;
-      case GL::ShaderType::Fragment: return GL_FRAGMENT_SHADER;
+      case GL::Shader::Type::Vertex  : return GL_VERTEX_SHADER;
+      case GL::Shader::Type::Geometry: return GL_GEOMETRY_SHADER;
+      case GL::Shader::Type::Fragment: return GL_FRAGMENT_SHADER;
     }
 
   throw std::runtime_error ("Invalid shader type");
@@ -22,7 +22,7 @@ int toGLEnum (GL::ShaderType type)
 namespace GL
 {
 //-----------------------------------------------------------------------------------------
-Shader::Shader (ShaderType _type, int _id) noexcept : mType (_type), mId (_id)
+Shader::Shader (Shader::Type type, int _id) noexcept : mType (type), mId (_id)
 {
 }
 
@@ -43,25 +43,13 @@ Shader &Shader::operator= (Shader &&rhs) noexcept
     glDeleteShader (mId);
 
   mType = rhs.mType;
-  mId = std::move (rhs).id ();
+  mId = rhs.mId;
+  rhs.mId = 0;
 
   return *this;
 }
 
-
-int Shader::id () const & noexcept
-{
-  return mId;
-}
-
-int Shader::id () && noexcept
-{
-  int idCopy = mId;
-  mId = 0;
-  return idCopy;
-}
-
-ShaderType Shader::type () const noexcept
+Shader::Type Shader::type () const noexcept
 {
   return mType;
 }
@@ -71,10 +59,10 @@ ShaderType Shader::type () const noexcept
 ShaderCompiler::ShaderCompiler () noexcept = default;
 ShaderCompiler::~ShaderCompiler () noexcept = default;
 
-std::optional<Shader> ShaderCompiler::compileCode (const char *code, ShaderType type) noexcept
+std::optional<Shader> ShaderCompiler::compileSource (const char *source, Shader::Type type) noexcept
 {
   int id = glCreateShader (toGLEnum (type));
-  glShaderSource (id, 1, &code, NULL);
+  glShaderSource (id, 1, &source, NULL);
   glCompileShader (id);
 
   int success;
@@ -93,10 +81,16 @@ std::optional<Shader> ShaderCompiler::compileCode (const char *code, ShaderType 
   return GL::Shader (type, id);
 }
 
-const char *ShaderCompiler::compileError () const noexcept
+const std::unique_ptr<char[]> &ShaderCompiler::compileError () const noexcept
 {
-  return mCompileError.get ();
+  return mCompileError;
 }
+
+std::unique_ptr<char[]> &&ShaderCompiler::takeCompileError () noexcept
+{
+  return std::move (mCompileError);
+}
+
 
 //-----------------------------------------------------------------------------------------
 }  // namespace GL

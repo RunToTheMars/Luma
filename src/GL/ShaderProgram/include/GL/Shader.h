@@ -6,17 +6,19 @@
 namespace GL
 {
 
-enum class ShaderType
-{
-  Vertex,
-  Geometry,
-  Fragment,
-};
+class ShaderCompiler;
+class ShaderProgramLinker;
 
 class Shader
 {
 public:
-  Shader (ShaderType type, int id) noexcept;
+  enum class Type
+  {
+    Vertex,
+    Geometry,
+    Fragment,
+  };
+
   Shader (const Shader &) = delete;
   Shader (Shader &&) noexcept;
   ~Shader () noexcept;
@@ -24,17 +26,18 @@ public:
   Shader &operator= (const Shader &) = delete;
   Shader &operator= (Shader &&) noexcept;
 
-  int id () const & noexcept;
-  int id () && noexcept;
-
-  ShaderType type () const noexcept;
+  Type type () const noexcept;
 
 private:
-  ShaderType mType;
-  int mId = 0;
+  friend class GL::ShaderCompiler;
+  friend class GL::ShaderProgramLinker;
+
+  Shader (Type type, int id) noexcept;
+
+  Type mType;
+  int mId;
 };
 
-class ShaderCompilerImpl;
 class ShaderCompiler
 {
 public:
@@ -46,8 +49,10 @@ public:
   ShaderCompiler &operator= (const ShaderCompiler &) = delete;
   ShaderCompiler &operator= (ShaderCompiler &&) noexcept;
 
-  std::optional<Shader> compileCode (const char *code, ShaderType type) noexcept;
-  const char *compileError () const noexcept;
+  std::optional<Shader> compileSource (const char *source, Shader::Type type) noexcept;
+
+  const std::unique_ptr<char[]> &compileError () const noexcept;
+  std::unique_ptr<char[]> &&takeCompileError () noexcept;
 
 private:
   std::unique_ptr<char[]> mCompileError;
