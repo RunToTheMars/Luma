@@ -1,5 +1,4 @@
-#include "GL/ASCII/v130/Word.h"
-#include "GL/ASCII/v150/Word.h"
+#include "GL/ASCII/v150/DebugShader.h"
 #include "GL/KeyEvent.h"
 #include "GL/ResizeEvent.h"
 #include "GL/Window.h"
@@ -8,7 +7,7 @@
 #include <chrono>
 #include <stdexcept>
 
-namespace GL_ASCII = GL::ASCII::v130;
+namespace GL_ASCII = GL::ASCII::v150;
 
 class MyWindow : public GL::Window
 {
@@ -16,7 +15,7 @@ class MyWindow : public GL::Window
   int m_frames = 0;
   std::string m_curFPS;
 
-  GL_ASCII::Renderer mTextRenderer;
+  std::unique_ptr<GL::ASCII::v150::DebugShader> mTextRenderer;
 
 public:
   MyWindow () noexcept = default;
@@ -27,11 +26,13 @@ public:
     if (glewInit () != GLEW_OK)
       throw std::runtime_error ("Can't init glew");
 
-    mTextRenderer.initialize ();
-    mTextRenderer.bind (GL::ShaderProgramBinderRestore ())
-        .setPosition (0.f, 0.f, 0.f)
-        .setColor (1.f, 1.f, 0.f, 1.f)
-        .setBackgroundColor (1.f, 1.f, 1.f, 0.f);
+    mTextRenderer = std::make_unique<GL::ASCII::v150::DebugShader> ();
+
+    mTextRenderer->bind ();
+    mTextRenderer->setPosition (0.f, 0.f, 0.f);
+    mTextRenderer->setColor (1.f, 1.f, 0.f, 1.f);
+    mTextRenderer->setBackgroundColor (1.f, 1.f, 1.f, 0.f);
+    mTextRenderer->unbind ();
 
     m_start = std::chrono::steady_clock::now ();
     m_frames = 0;
@@ -59,15 +60,23 @@ public:
     if (!m_curFPS.empty ())
       {
         constexpr double scale = 1.;
+        mTextRenderer->bind ();
+        mTextRenderer->setSize (scale * 2.f * GL::ASCII::v150::DebugShader::glyphTextureWidth () / size ().width (),
+                                scale * 2.f * GL::ASCII::v150::DebugShader::glyphTextureHeight () / size ().height ());
 
-        GL::ShaderProgramBinderRestore b;
-        auto binder = mTextRenderer.bind (b);
+        unsigned int vbo;
+        glGenBuffers (1, &vbo);
 
-        binder.setSize (scale * 2.f * GL_ASCII::Renderer::glyphTextureWidth () / size ().width (),
-                        scale * 2.f * GL_ASCII::Renderer::glyphTextureHeight () / size ().height ());
-        GL_ASCII::Renderer::Data data (m_curFPS.c_str (), m_curFPS.size ());
-        for (int i = 0; i < 1; i++)
-          binder.draw (data);
+        glBindBuffer (GL_ARRAY_BUFFER, vbo);
+        glBufferData (GL_ARRAY_BUFFER, m_curFPS.size (), m_curFPS.data (), GL_STATIC_DRAW);
+
+        glVertexAttribIPointer (mTextRenderer->attributeCodeLocation (), 1, GL_UNSIGNED_BYTE, 0, (void *) nullptr);
+        glEnableVertexAttribArray (mTextRenderer->attributeCodeLocation ());
+        glDrawArrays (GL_POINTS /*mode*/, 0 /* first */, m_curFPS.size () /* count */);
+        glDisableVertexAttribArray (mTextRenderer->attributeCodeLocation ());
+        glBindBuffer (GL_ARRAY_BUFFER, 0);
+
+        mTextRenderer->unbind ();
       }
   }
 

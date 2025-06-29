@@ -10,7 +10,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON) # Обязательно ли использ
 
 add_library (LibGL_ASCII STATIC
              src/v130/Word.cpp
-             src/v150/Word.cpp)
+             src/v150/Word.cpp
+             src/v150/DebugShader.cpp)
 
 target_include_directories(LibGL_ASCII PUBLIC include)
 
