@@ -10,6 +10,10 @@ namespace v150
 {
 DebugShader::DebugShader () noexcept
 {
+}
+
+void DebugShader::init () noexcept
+{
   const char *vertexShaderSource = "#version 130                                                                               \n"
                                    "                                                                                           \n"
                                    "attribute uint a_ascii_code; // vanila vertex attribute: ascii code (belongs to [0, 255])  \n"

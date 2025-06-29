@@ -9,14 +9,9 @@ set(CMAKE_CXX_STANDARD 17)          # Версия стандарта С++
 set(CMAKE_CXX_STANDARD_REQUIRED ON) # Обязательно ли использовать именно этот стандарт, или можно выше.
 
 add_library (LibGL_ASCII STATIC
-             src/v130/Word.cpp
-             src/v150/Word.cpp
              src/v150/DebugShader.cpp)
 
 target_include_directories(LibGL_ASCII PUBLIC include)
 
 target_link_libraries(LibGL_ASCII
-                      PRIVATE libglew_static
-                      PUBLIC  LibGL_ShaderProgram
-                      PUBLIC  LibGL_Buffer
-                      PRIVATE LibCommon_DoAfterScope)
+                      PRIVATE libglew_static)

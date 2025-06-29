@@ -17,6 +17,8 @@ public:
   DebugShader &operator= (const DebugShader &) = delete;
   DebugShader &operator= (DebugShader &&) = delete;
 
+  void init () noexcept;
+
   static constexpr int glyphTextureWidth () { return 8; }
   static constexpr int glyphTextureHeight () { return 16; }
 

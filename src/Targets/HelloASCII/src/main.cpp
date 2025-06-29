@@ -7,7 +7,8 @@
 #include <chrono>
 #include <stdexcept>
 
-namespace GL_ASCII = GL::ASCII::v150;
+#define ALLOC
+#define PATTERN GL_DYNAMIC_DRAW
 
 class MyWindow : public GL::Window
 {
@@ -15,24 +16,43 @@ class MyWindow : public GL::Window
   int m_frames = 0;
   std::string m_curFPS;
 
-  std::unique_ptr<GL::ASCII::v150::DebugShader> mTextRenderer;
+  GL::ASCII::v150::DebugShader mTextRenderer;
+  unsigned int mTextVBO;
 
 public:
   MyWindow () noexcept = default;
-  ~MyWindow () noexcept override = default;
+  ~MyWindow () noexcept override
+  {
+    glDeleteBuffers (1, &mTextVBO);
+  }
 
   void init () override
   {
     if (glewInit () != GLEW_OK)
       throw std::runtime_error ("Can't init glew");
 
-    mTextRenderer = std::make_unique<GL::ASCII::v150::DebugShader> ();
+    /// compile & link
+    mTextRenderer.init ();
 
-    mTextRenderer->bind ();
-    mTextRenderer->setPosition (0.f, 0.f, 0.f);
-    mTextRenderer->setColor (1.f, 1.f, 0.f, 1.f);
-    mTextRenderer->setBackgroundColor (1.f, 1.f, 1.f, 0.f);
-    mTextRenderer->unbind ();
+    /// for blending
+    glEnable (GL_BLEND);
+    glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    /// create buffer
+    glGenBuffers (1, &mTextVBO);
+
+    #ifdef ALLOC
+    /// allocate
+    glBindBuffer (GL_ARRAY_BUFFER, mTextVBO);
+    glBufferData (GL_ARRAY_BUFFER, 100, nullptr, PATTERN);
+    glBindBuffer (GL_ARRAY_BUFFER, 0);
+    #endif
+
+    mTextRenderer.bind ();
+    mTextRenderer.setPosition (0.f, 0.f, 0.f);
+    mTextRenderer.setColor (1.f, 1.f, 0.f, 1.f);
+    mTextRenderer.setBackgroundColor (1.f, 1.f, 1.f, 0.f);
+    mTextRenderer.unbind ();
 
     m_start = std::chrono::steady_clock::now ();
     m_frames = 0;
@@ -42,8 +62,6 @@ public:
   {
     glClearColor (0.5f, 0.5f, 0.5f, 1.0f);
     glClear (GL_COLOR_BUFFER_BIT);
-    glEnable (GL_BLEND);
-    glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     std::chrono::steady_clock::time_point cur_time = std::chrono::steady_clock::now ();
     const std::chrono::duration<double> elapsed_seconds{cur_time - m_start};
@@ -59,24 +77,25 @@ public:
 
     if (!m_curFPS.empty ())
       {
+        mTextRenderer.bind ();
+        glBindBuffer (GL_ARRAY_BUFFER, mTextVBO);
+
+        #ifdef ALLOC
+        glBufferSubData (GL_ARRAY_BUFFER, 0, m_curFPS.size (), m_curFPS.data ());
+        #else
+        glBufferData (GL_ARRAY_BUFFER, m_curFPS.size (), m_curFPS.data (), PATTERN);
+        #endif
+
         constexpr double scale = 1.;
-        mTextRenderer->bind ();
-        mTextRenderer->setSize (scale * 2.f * GL::ASCII::v150::DebugShader::glyphTextureWidth () / size ().width (),
-                                scale * 2.f * GL::ASCII::v150::DebugShader::glyphTextureHeight () / size ().height ());
+        mTextRenderer.setSize (scale * 2.f * GL::ASCII::v150::DebugShader::glyphTextureWidth () / size ().width (),
+                               scale * 2.f * GL::ASCII::v150::DebugShader::glyphTextureHeight () / size ().height ());
 
-        unsigned int vbo;
-        glGenBuffers (1, &vbo);
-
-        glBindBuffer (GL_ARRAY_BUFFER, vbo);
-        glBufferData (GL_ARRAY_BUFFER, m_curFPS.size (), m_curFPS.data (), GL_STATIC_DRAW);
-
-        glVertexAttribIPointer (mTextRenderer->attributeCodeLocation (), 1, GL_UNSIGNED_BYTE, 0, (void *) nullptr);
-        glEnableVertexAttribArray (mTextRenderer->attributeCodeLocation ());
+        glVertexAttribIPointer (mTextRenderer.attributeCodeLocation (), 1, GL_UNSIGNED_BYTE, 0, (void *) nullptr);
+        glEnableVertexAttribArray (mTextRenderer.attributeCodeLocation ());
         glDrawArrays (GL_POINTS /*mode*/, 0 /* first */, m_curFPS.size () /* count */);
-        glDisableVertexAttribArray (mTextRenderer->attributeCodeLocation ());
+        glDisableVertexAttribArray (mTextRenderer.attributeCodeLocation ());
         glBindBuffer (GL_ARRAY_BUFFER, 0);
-
-        mTextRenderer->unbind ();
+        mTextRenderer.unbind ();
       }
   }
 
