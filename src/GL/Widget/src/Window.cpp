@@ -180,6 +180,7 @@ WindowCreateConfig::~WindowCreateConfig ()
   m_window.m_pimpl->window = glfwCreateWindow (m_size.width (), m_size.height (), m_title, nullptr, nullptr);
   GLFWWindowContainer::get_instance ().add (*m_window.m_pimpl->window, m_window);
 
+  glfwGetWindowSize (m_window.m_pimpl->window, &m_size.rwidth (), &m_size.rheight ());
   resizeCallback (m_window.m_pimpl->window, m_size.width (), m_size.height ());
 
   glfwSetKeyCallback (m_window.m_pimpl->window, keyCallback);
@@ -230,8 +231,8 @@ WindowCreateConfig &WindowCreateConfig::setSamples (int val)
 
 WindowCreateConfig &WindowCreateConfig::setRefreshRate (int val)
 {
-    glfwWindowHint (GLFW_REFRESH_RATE, val);
-    return *this;
+  glfwWindowHint (GLFW_REFRESH_RATE, val);
+  return *this;
 }
 
 WindowCreateConfig &WindowCreateConfig::setDoubleBuffer (bool val)

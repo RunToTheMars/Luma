@@ -1,29 +1,29 @@
 cmake_minimum_required(VERSION 3.16)  # Минимальная версия cmake = 3.16
 
-project(HelloASCII
+project(HelloTriangle
         VERSION 1.0
-        DESCRIPTION "Hello World for ASCII"
+        DESCRIPTION "Hello Triangle"
         LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)          # Версия стандарта С++
 set(CMAKE_CXX_STANDARD_REQUIRED ON) # Обязательно ли использовать именно этот стандарт, или можно выше.
 
-add_executable(HelloASCIICompat src/main.cpp)
-add_executable(HelloASCIICore   src/main.cpp)
+add_executable(2_HelloTriangleCompat src/main.cpp)
+add_executable(2_HelloTriangleCore   src/main.cpp)
 
-target_compile_definitions (HelloASCIICore PRIVATE COREPROFILE)
+target_compile_definitions (2_HelloTriangleCore PRIVATE COREPROFILE)
 
-target_link_libraries(HelloASCIICompat
+target_link_libraries(2_HelloTriangleCompat
                       PRIVATE libglew_static
-                      PRIVATE LibGL_ASCII
-                      PRIVATE LibGL_Widget
-                      PRIVATE LibGL_Buffer)
-
-target_link_libraries(HelloASCIICore
-                      PRIVATE libglew_static
-                      PRIVATE LibGL_ASCII
                       PRIVATE LibGL_Widget
                       PRIVATE LibGL_Buffer
+                      PRIVATE LibGL_ShaderProgram)
+
+target_link_libraries(2_HelloTriangleCore
+                      PRIVATE libglew_static
+                      PRIVATE LibGL_Widget
+                      PRIVATE LibGL_Buffer
+                      PRIVATE LibGL_ShaderProgram
                       PRIVATE LibGL_VertexArray)
 
 

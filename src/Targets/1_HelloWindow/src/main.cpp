@@ -30,7 +30,7 @@ public:
 int main ()
 {
   MyWindow window;
-  window.create ({800, 600} /* size */, "Hello World!")
+  window.create ({800, 600} /* size */, "Hello Window!")
       .setResizable (true)
       .setDecorated (true)
       .setVisible (true)
@@ -39,6 +39,6 @@ int main ()
       .setAutoIconify (true)
       .setVersionMajor (3)
       .setVersionMinor (3)
-      .setOpenGLProfile (GL::WindowCreateConfig::Profile::COMPAT);
+      .setOpenGLProfile (GL::WindowCreateConfig::Profile::CORE);
   window.exec ();
 }

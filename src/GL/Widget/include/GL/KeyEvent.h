@@ -4,8 +4,8 @@ namespace GL
 {
 enum class KeyAction {
   Press,
-  Release,
   Repeat,
+  Release,
 };
 
 enum class Key {

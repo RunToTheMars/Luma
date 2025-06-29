@@ -27,9 +27,16 @@ public:
   const float *backgroundColor () const noexcept;
   const float *size () const noexcept;
 
+  /// -------------------------------
+  /// \note Only for Inited
+  int attributeCodeLocation () const;
+
   void bind ();
   void unbind ();
+  /// -------------------------------
 
+  /// -------------------------------
+  /// \note Only for Binded
   void setPosition (const float *pos) noexcept;
   void setPosition (float x, float y, float z) noexcept;
 
@@ -41,8 +48,7 @@ public:
 
   void setSize (const float *size) noexcept;
   void setSize (float width, float height) noexcept;
-
-  int attributeCodeLocation () const;
+  /// -------------------------------
 
 private:
   int mProgramId = 0;

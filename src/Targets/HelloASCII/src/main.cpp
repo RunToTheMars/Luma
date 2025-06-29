@@ -2,13 +2,20 @@
 #include "GL/KeyEvent.h"
 #include "GL/ResizeEvent.h"
 #include "GL/Window.h"
+#include "GL/Buffer.h"
+#ifdef COREPROFILE
+#include "GL/VertexArray.h"
+#endif
 #include "Geometry/Size.h"
 #include <GL/glew.h>
 #include <chrono>
 #include <stdexcept>
 
-#define ALLOC
-#define PATTERN GL_DYNAMIC_DRAW
+//#define USE_INDICES
+
+#ifdef USE_INDICES
+char INDICES[13]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+#endif
 
 class MyWindow : public GL::Window
 {
@@ -17,13 +24,20 @@ class MyWindow : public GL::Window
   std::string m_curFPS;
 
   GL::ASCII::v150::DebugShader mTextRenderer;
-  unsigned int mTextVBO;
+  GL::Buffer mTextVBO;
+
+#ifdef COREPROFILE
+  GL::VertexArray mTextVAO;
+#endif
+
+#ifdef USE_INDICES
+  GL::Buffer mTextEBO = GL::Buffer (GL::Buffer::Type::Index);
+#endif
 
 public:
   MyWindow () noexcept = default;
   ~MyWindow () noexcept override
   {
-    glDeleteBuffers (1, &mTextVBO);
   }
 
   void init () override
@@ -38,18 +52,41 @@ public:
     glEnable (GL_BLEND);
     glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    /// create buffer
-    glGenBuffers (1, &mTextVBO);
+#ifdef COREPROFILE
+    mTextVAO.create ();
+    mTextVAO.bind ();
 
-    #ifdef ALLOC
-    /// allocate
-    glBindBuffer (GL_ARRAY_BUFFER, mTextVBO);
-    glBufferData (GL_ARRAY_BUFFER, 100, nullptr, PATTERN);
-    glBindBuffer (GL_ARRAY_BUFFER, 0);
-    #endif
+    mTextVBO.create ();
+    mTextVBO.bind ();
+    mTextVBO.allocate (20, GL::Buffer::UsagePattern::StreamDraw);
+
+#ifdef USE_INDICES
+    mTextEBO.create ();
+    mTextEBO.bind ();
+    mTextEBO.allocate (INDICES, sizeof (INDICES), GL::Buffer::UsagePattern::StaticDraw);
+#endif
+
+    glVertexAttribIPointer (mTextRenderer.attributeCodeLocation (), 1, GL_UNSIGNED_BYTE, 0, (void *) nullptr); /// Use current binded GL_ARRAY_BUFFER
+    glEnableVertexAttribArray (mTextRenderer.attributeCodeLocation ());
+
+    mTextVAO.unbind ();
+#else
+
+#ifdef USE_INDICES
+    mTextEBO.create ();
+    mTextEBO.bind ();
+    mTextEBO.allocate (INDICES, sizeof (INDICES), GL::Buffer::UsagePattern::StaticDraw);
+    mTextEBO.unbind ();
+#endif // USE_INDICES
+
+    mTextVBO.create ();
+    mTextVBO.bind ();
+    mTextVBO.allocate (20, GL::Buffer::UsagePattern::DynamicDraw);
+    mTextVBO.unbind ();
+#endif // COREPROFILE
 
     mTextRenderer.bind ();
-    mTextRenderer.setPosition (0.f, 0.f, 0.f);
+    mTextRenderer.setPosition (-1.f, -1.f, 0.f);
     mTextRenderer.setColor (1.f, 1.f, 0.f, 1.f);
     mTextRenderer.setBackgroundColor (1.f, 1.f, 1.f, 0.f);
     mTextRenderer.unbind ();
@@ -77,25 +114,46 @@ public:
 
     if (!m_curFPS.empty ())
       {
-        mTextRenderer.bind ();
-        glBindBuffer (GL_ARRAY_BUFFER, mTextVBO);
+#ifdef COREPROFILE
+          mTextRenderer.bind ();
+          constexpr double scale = 1.;
+          mTextRenderer.setSize (scale * 2.f * GL::ASCII::v150::DebugShader::glyphTextureWidth () / size ().width (),
+                                scale * 2.f * GL::ASCII::v150::DebugShader::glyphTextureHeight () / size ().height ());
+          mTextVAO.bind ();
+          mTextVBO.write (0, m_curFPS.data (), m_curFPS.size ());
+#ifdef USE_INDICES
+          glDrawElements (GL_POINTS /*mode*/, sizeof (INDICES) /* count */, GL_UNSIGNED_BYTE /* type */, nullptr /*indices*/);
 
-        #ifdef ALLOC
-        glBufferSubData (GL_ARRAY_BUFFER, 0, m_curFPS.size (), m_curFPS.data ());
-        #else
-        glBufferData (GL_ARRAY_BUFFER, m_curFPS.size (), m_curFPS.data (), PATTERN);
-        #endif
+#else
+          glDrawArrays (GL_POINTS /*mode*/, 0 /* first */, m_curFPS.size () /* count */);
+#endif
+          mTextVAO.unbind ();
+          mTextRenderer.unbind ();
+          #else
+          mTextVBO.bind ();
+          mTextVBO.write (0, m_curFPS.data (), m_curFPS.size ());
 
-        constexpr double scale = 1.;
-        mTextRenderer.setSize (scale * 2.f * GL::ASCII::v150::DebugShader::glyphTextureWidth () / size ().width (),
-                               scale * 2.f * GL::ASCII::v150::DebugShader::glyphTextureHeight () / size ().height ());
+          glVertexAttribIPointer (mTextRenderer.attributeCodeLocation (), 1, GL_UNSIGNED_BYTE, 0, (void *) nullptr); /// Use current binded GL_ARRAY_BUFFER
+          glEnableVertexAttribArray (mTextRenderer.attributeCodeLocation ());
 
-        glVertexAttribIPointer (mTextRenderer.attributeCodeLocation (), 1, GL_UNSIGNED_BYTE, 0, (void *) nullptr);
-        glEnableVertexAttribArray (mTextRenderer.attributeCodeLocation ());
-        glDrawArrays (GL_POINTS /*mode*/, 0 /* first */, m_curFPS.size () /* count */);
-        glDisableVertexAttribArray (mTextRenderer.attributeCodeLocation ());
-        glBindBuffer (GL_ARRAY_BUFFER, 0);
-        mTextRenderer.unbind ();
+          mTextRenderer.bind ();
+
+          constexpr double scale = 1.;
+          mTextRenderer.setSize (scale * 2.f * GL::ASCII::v150::DebugShader::glyphTextureWidth () / size ().width (),
+                                 scale * 2.f * GL::ASCII::v150::DebugShader::glyphTextureHeight () / size ().height ());
+#ifdef USE_INDICES
+          mTextEBO.bind ();
+          glDrawElements (GL_POINTS /*mode*/, sizeof (INDICES) /* count */, GL_UNSIGNED_BYTE /* type */, nullptr /*indices*/);
+          mTextEBO.unbind ();
+#else
+          glDrawArrays (GL_POINTS /*mode*/, 0 /* first */, m_curFPS.size () /* count */);
+#endif
+          glDisableVertexAttribArray (mTextRenderer.attributeCodeLocation ());
+          glBindBuffer (GL_ARRAY_BUFFER, 0);
+          mTextRenderer.unbind ();
+
+          mTextVBO.unbind ();
+#endif
       }
   }
 
@@ -115,15 +173,23 @@ public:
 int main ()
 {
   MyWindow window;
-  window.create ({800, 600} /* size */, "Hello ASCII!")
+  #ifdef COREPROFILE
+  window.create ({800, 600} /* size */, "Hello ASCII! (Core)")
+  #else
+  window.create ({800, 600} /* size */, "Hello ASCII! (Compatibility)")
+  #endif
       .setResizable (true)
       .setDecorated (true)
       .setVisible (true)
-      .setMaximized (false)
+      .setMaximized (true)
       .setFocused (true)
       .setAutoIconify (true)
       .setVersionMajor (3)
       .setVersionMinor (3)
+#ifdef COREPROFILE
+      .setOpenGLProfile (GL::WindowCreateConfig::Profile::CORE);
+#else
       .setOpenGLProfile (GL::WindowCreateConfig::Profile::COMPAT);
+#endif
   window.exec ();
 }

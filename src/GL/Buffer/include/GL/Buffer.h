@@ -2,97 +2,58 @@
 
 namespace GL
 {
-namespace Buffer
-{
-enum class Type
-{
-  Vertex,
-  Index,
-};
-
-enum class UsagePattern
-{
-  StaticDraw,
-  StreamDraw,
-  DynamicDraw,
-};
-}
-
-template <Buffer::Type Type>
-class BufferBinderInterface;
-
-template <Buffer::Type Type>
-class BufferImpl
+class Buffer
 {
 public:
-  BufferImpl () noexcept;
-  BufferImpl (const BufferImpl &) = delete;
-  BufferImpl (BufferImpl &&) noexcept;
-  ~BufferImpl () noexcept;
+  enum class Type
+  {
+    Vertex = 0x8892, // GL_ARRAY_BUFFER
+    Index  = 0x8893  // GL_ELEMENT_ARRAY_BUFFER
+  };
 
-  BufferImpl &operator=(const BufferImpl &) noexcept;
-  BufferImpl &operator=(BufferImpl &&) noexcept;
+  enum class UsagePattern
+  {
+    StreamDraw  = 0x88E0, // GL_STREAM_DRAW
+    StaticDraw  = 0x88E4, // GL_STATIC_DRAW
+    DynamicDraw = 0x88E8  // GL_DYNAMIC_DRAW
+  };
+
+  Buffer (Type type = Type::Vertex) noexcept;
+  Buffer (const Buffer &) = delete;
+  Buffer (Buffer &&) noexcept;
+  ~Buffer () noexcept;
+
+  Buffer &operator= (const Buffer &) noexcept;
+  Buffer &operator= (Buffer &&) noexcept;
 
   void create () noexcept;
   bool isCreated () const noexcept;
+  void destroy () noexcept;
 
+  /// -------------------------------
+  /// \note Only for Created
+  void bind () const noexcept;
+  void unbind () const noexcept;
+  /// -------------------------------
+
+  /// -------------------------------
+  /// \note Only for Binded
+  void allocate (int count, Buffer::UsagePattern usagePattern = Buffer::UsagePattern::StaticDraw) noexcept { allocate (nullptr, count, usagePattern); }
+  void allocate (const void *data, int count, Buffer::UsagePattern usagePattern = Buffer::UsagePattern::StaticDraw) noexcept;
+  void read (int offset, void *data, int count) const noexcept;
+  void write (int offset, const void *data, int count) const noexcept;
+  /// -------------------------------
+
+  /// -------------------------------
   /// \note Only for allocated buffer
   Buffer::UsagePattern usagePattern () const noexcept;
   int count () const noexcept;
+  /// -------------------------------
 
 private:
-  friend class GL::BufferBinderInterface<Type>;
-
+  Type mType;
   unsigned int mId = 0;
   Buffer::UsagePattern mUsagePattern = Buffer::UsagePattern::StaticDraw;
   int mCount = 0;
 };
-
-template <Buffer::Type Type>
-class BufferBinderInterface
-{
-protected:
-  BufferBinderInterface () noexcept;
-  ~BufferBinderInterface () noexcept;
-
-public:
-  const BufferBinderInterface &bind (const BufferImpl<Type> &buffer) const noexcept;
-  const BufferBinderInterface &allocate (int count, const void *data = nullptr, Buffer::UsagePattern pattern = Buffer::UsagePattern::StaticDraw) const noexcept;
-  const BufferBinderInterface &read (int offset, void *data, int count) const noexcept;
-  const BufferBinderInterface &write (int offset, const void *data, int count) const noexcept;
-};
-
-template <Buffer::Type Type>
-class BufferBinderRestore: public BufferBinderInterface<Type>
-{
-public:
-  BufferBinderRestore () noexcept;
-  BufferBinderRestore (const BufferImpl<Type> &buffer) noexcept;
-  BufferBinderRestore (const BufferBinderRestore &) = delete;
-  BufferBinderRestore (BufferBinderRestore &&) = delete;
-  ~BufferBinderRestore () noexcept;
-
-  BufferBinderRestore &operator= (const BufferBinderRestore &) = delete;
-  BufferBinderRestore &operator= (BufferBinderRestore &&) = delete;
-
-private:
-  int mRestoreId;
-};
-
-template <Buffer::Type Type>
-class BufferBinderUnsafe: public BufferBinderInterface<Type>
-{
-public:
-  BufferBinderUnsafe () noexcept;
-  BufferBinderUnsafe (const BufferImpl<Type> &buffer) noexcept;
-  BufferBinderUnsafe (const BufferBinderUnsafe &) = delete;
-  BufferBinderUnsafe (BufferBinderUnsafe &&) = delete;
-  ~BufferBinderUnsafe () noexcept;
-
-  BufferBinderUnsafe &operator= (const BufferBinderUnsafe &) = delete;
-  BufferBinderUnsafe &operator= (BufferBinderUnsafe &&) = delete;
-};
-
-using VertexBuffer = BufferImpl<Buffer::Type::Vertex>;
-using IndexBuffer = BufferImpl<Buffer::Type::Index>;
-}
+}  // namespace GL
