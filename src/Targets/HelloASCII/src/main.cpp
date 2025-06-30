@@ -1,38 +1,24 @@
-#include "GL/ASCII/v150/DebugShader.h"
+#include "GL/ASCII/v150/Debug/TextLineShader.h"
 #include "GL/KeyEvent.h"
 #include "GL/ResizeEvent.h"
 #include "GL/Window.h"
 #include "GL/Buffer.h"
-#ifdef COREPROFILE
 #include "GL/VertexArray.h"
-#endif
 #include "Geometry/Size.h"
 #include <GL/glew.h>
-#include <chrono>
 #include <stdexcept>
 
-//#define USE_INDICES
-
-#ifdef USE_INDICES
-char INDICES[13]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
-#endif
+namespace
+{
+constexpr int TableWidth = 8;
+constexpr int TableHeight = 32;
+}
 
 class MyWindow : public GL::Window
 {
-  std::chrono::steady_clock::time_point m_start;
-  int m_frames = 0;
-  std::string m_curFPS;
-
-  GL::ASCII::v150::DebugShader mTextRenderer;
+  GL::ASCII::v150::Debug::TextLineShader mTextLineShader;
   GL::Buffer mTextVBO;
-
-#ifdef COREPROFILE
   GL::VertexArray mTextVAO;
-#endif
-
-#ifdef USE_INDICES
-  GL::Buffer mTextEBO = GL::Buffer (GL::Buffer::Type::Index);
-#endif
 
 public:
   MyWindow () noexcept = default;
@@ -45,54 +31,45 @@ public:
     if (glewInit () != GLEW_OK)
       throw std::runtime_error ("Can't init glew");
 
-    /// compile & link
-    mTextRenderer.init ();
+    mTextLineShader.init ();
 
-    /// for blending
-    glEnable (GL_BLEND);
-    glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-#ifdef COREPROFILE
     mTextVAO.create ();
     mTextVAO.bind ();
 
+    /// ...
+    /// _065_A
+    /// _066_B_
+    /// ...
+    /// _120_x_
+    /// ...
+    char ASCIITable[7 * 256];
+    for (int pos = 0; pos < 256; pos++)
+      {
+        int h = pos / TableWidth;
+        int w = pos % TableWidth;
+
+        int num = w * TableHeight + h;
+
+        int posIndex = 7 * pos;
+
+        ASCIITable[posIndex + 0] = ' ';
+        ASCIITable[posIndex + 1] = '0' + static_cast<char> (num / 100);
+        ASCIITable[posIndex + 2] = '0' + static_cast<char> ((num / 10) % 10);
+        ASCIITable[posIndex + 3] = '0' + static_cast<char> (num % 10);
+        ASCIITable[posIndex + 4] = ' ';
+        ASCIITable[posIndex + 5] = static_cast<char> (num);
+        ASCIITable[posIndex + 6] = ' ';
+      }
+
     mTextVBO.create ();
     mTextVBO.bind ();
-    mTextVBO.allocate (20, GL::Buffer::UsagePattern::StreamDraw);
-
-#ifdef USE_INDICES
-    mTextEBO.create ();
-    mTextEBO.bind ();
-    mTextEBO.allocate (INDICES, sizeof (INDICES), GL::Buffer::UsagePattern::StaticDraw);
-#endif
-
-    glVertexAttribIPointer (mTextRenderer.attributeCodeLocation (), 1, GL_UNSIGNED_BYTE, 0, (void *) nullptr); /// Use current binded GL_ARRAY_BUFFER
-    glEnableVertexAttribArray (mTextRenderer.attributeCodeLocation ());
-
-    mTextVAO.unbind ();
-#else
-
-#ifdef USE_INDICES
-    mTextEBO.create ();
-    mTextEBO.bind ();
-    mTextEBO.allocate (INDICES, sizeof (INDICES), GL::Buffer::UsagePattern::StaticDraw);
-    mTextEBO.unbind ();
-#endif // USE_INDICES
-
-    mTextVBO.create ();
-    mTextVBO.bind ();
-    mTextVBO.allocate (20, GL::Buffer::UsagePattern::DynamicDraw);
+    mTextVBO.allocate (ASCIITable, sizeof (ASCIITable), GL::Buffer::UsagePattern::StaticDraw);
     mTextVBO.unbind ();
-#endif // COREPROFILE
 
-    mTextRenderer.bind ();
-    mTextRenderer.setPosition (-1.f, -1.f, 0.f);
-    mTextRenderer.setColor (1.f, 1.f, 0.f, 1.f);
-    mTextRenderer.setBackgroundColor (1.f, 1.f, 1.f, 0.f);
-    mTextRenderer.unbind ();
-
-    m_start = std::chrono::steady_clock::now ();
-    m_frames = 0;
+    mTextLineShader.bind ();
+    mTextLineShader.setColor (0.f, 0.f, 0.f, 1.f);
+    mTextLineShader.setBackgroundColor (0.45f, 0.45f, 0.45f, 1.f);
+    mTextLineShader.unbind ();
   }
 
   void renderEvent () override
@@ -100,61 +77,26 @@ public:
     glClearColor (0.5f, 0.5f, 0.5f, 1.0f);
     glClear (GL_COLOR_BUFFER_BIT);
 
-    std::chrono::steady_clock::time_point cur_time = std::chrono::steady_clock::now ();
-    const std::chrono::duration<double> elapsed_seconds{cur_time - m_start};
-    m_frames++;
-    double dur_secs = elapsed_seconds.count ();
-    if (dur_secs > 1.)
+    mTextLineShader.bind ();
+
+    constexpr float scale = 2.;
+    float glyphSize[2] = {scale * 2.f * GL::ASCII::v150::Debug::glyphTextureWidth () / size ().width (),
+                          scale * 2.f * GL::ASCII::v150::Debug::glyphTextureHeight () / size ().height ()};
+
+    mTextLineShader.setSize (glyphSize);
+
+    mTextVBO.bind ();
+    glEnableVertexAttribArray (mTextLineShader.attributeCodeLocation ());
+    for (int h = 0; h < TableHeight; h++)
       {
-        double fps = static_cast<double> (m_frames) / dur_secs;
-        m_start = cur_time;
-        m_curFPS = "FPS: " + std::to_string (fps);
-        m_frames = 0;
+        mTextLineShader.setPosition (-1.f, 1.f - (h + 1) * glyphSize[1], 0.f);
+        glVertexAttribIPointer (mTextLineShader.attributeCodeLocation (), 1, GL_UNSIGNED_BYTE, 0, (void *) (h * TableWidth  * 7)); /// Use current binded GL_ARRAY_BUFFER
+        glDrawArrays (GL_POINTS /*mode*/, 0 /* first */, TableWidth * 7 /* count */);
       }
+    glDisableVertexAttribArray (mTextLineShader.attributeCodeLocation ());
+    mTextVBO.unbind ();
 
-    if (!m_curFPS.empty ())
-      {
-#ifdef COREPROFILE
-          mTextRenderer.bind ();
-          constexpr double scale = 1.;
-          mTextRenderer.setSize (scale * 2.f * GL::ASCII::v150::DebugShader::glyphTextureWidth () / size ().width (),
-                                scale * 2.f * GL::ASCII::v150::DebugShader::glyphTextureHeight () / size ().height ());
-          mTextVAO.bind ();
-          mTextVBO.write (0, m_curFPS.data (), m_curFPS.size ());
-#ifdef USE_INDICES
-          glDrawElements (GL_POINTS /*mode*/, sizeof (INDICES) /* count */, GL_UNSIGNED_BYTE /* type */, nullptr /*indices*/);
-
-#else
-          glDrawArrays (GL_POINTS /*mode*/, 0 /* first */, m_curFPS.size () /* count */);
-#endif
-          mTextVAO.unbind ();
-          mTextRenderer.unbind ();
-          #else
-          mTextVBO.bind ();
-          mTextVBO.write (0, m_curFPS.data (), m_curFPS.size ());
-
-          glVertexAttribIPointer (mTextRenderer.attributeCodeLocation (), 1, GL_UNSIGNED_BYTE, 0, (void *) nullptr); /// Use current binded GL_ARRAY_BUFFER
-          glEnableVertexAttribArray (mTextRenderer.attributeCodeLocation ());
-
-          mTextRenderer.bind ();
-
-          constexpr double scale = 1.;
-          mTextRenderer.setSize (scale * 2.f * GL::ASCII::v150::DebugShader::glyphTextureWidth () / size ().width (),
-                                 scale * 2.f * GL::ASCII::v150::DebugShader::glyphTextureHeight () / size ().height ());
-#ifdef USE_INDICES
-          mTextEBO.bind ();
-          glDrawElements (GL_POINTS /*mode*/, sizeof (INDICES) /* count */, GL_UNSIGNED_BYTE /* type */, nullptr /*indices*/);
-          mTextEBO.unbind ();
-#else
-          glDrawArrays (GL_POINTS /*mode*/, 0 /* first */, m_curFPS.size () /* count */);
-#endif
-          glDisableVertexAttribArray (mTextRenderer.attributeCodeLocation ());
-          glBindBuffer (GL_ARRAY_BUFFER, 0);
-          mTextRenderer.unbind ();
-
-          mTextVBO.unbind ();
-#endif
-      }
+    mTextLineShader.unbind ();
   }
 
   void resizeEvent (const GL::ResizeEvent &event) override
@@ -173,23 +115,15 @@ public:
 int main ()
 {
   MyWindow window;
-  #ifdef COREPROFILE
-  window.create ({800, 600} /* size */, "Hello ASCII! (Core)")
-  #else
-  window.create ({800, 600} /* size */, "Hello ASCII! (Compatibility)")
-  #endif
-      .setResizable (true)
-      .setDecorated (true)
-      .setVisible (true)
-      .setMaximized (true)
-      .setFocused (true)
-      .setAutoIconify (true)
-      .setVersionMajor (3)
-      .setVersionMinor (3)
-#ifdef COREPROFILE
-      .setOpenGLProfile (GL::WindowCreateConfig::Profile::CORE);
-#else
-      .setOpenGLProfile (GL::WindowCreateConfig::Profile::COMPAT);
-#endif
+  window.create ({800, 600} /* size */, "Hello ASCII!")
+        .setResizable (true)
+        .setDecorated (true)
+        .setVisible (true)
+        .setMaximized (true)
+        .setFocused (true)
+        .setAutoIconify (true)
+        .setVersionMajor (3)
+        .setVersionMinor (3)
+        .setOpenGLProfile (GL::WindowCreateConfig::Profile::CORE);
   window.exec ();
 }

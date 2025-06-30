@@ -56,8 +56,7 @@ GL::Key toKey (int key)
       case GLFW_KEY_ESCAPE:  return GL::Key::Key_ESCAPE;
     }
 
-  throw std::runtime_error ("Invalid Key");
-  return GL::Key::Key_ESCAPE;
+  return GL::Key::Key_0;
 }
 // clang-format on
 

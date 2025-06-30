@@ -19,6 +19,7 @@ add_subdirectory(src/GL/Buffer)
 add_subdirectory(src/GL/VertexArray)
 add_subdirectory(src/GL/Widget)
 
-add_subdirectory(src/Targets/HelloASCII)
 add_subdirectory(src/Targets/1_HelloWindow)
 add_subdirectory(src/Targets/2_HelloTriangle)
+add_subdirectory(src/Targets/HelloFPS)
+add_subdirectory(src/Targets/HelloASCII)
