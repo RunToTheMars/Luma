@@ -38,29 +38,6 @@ int toGLFW (GL::WindowCreateConfig::Profile profile)
 // clang-format on
 
 // clang-format off
-GL::Key toKey (int key)
-{
-  switch (key)
-    {
-      case GLFW_KEY_0: return GL::Key::Key_0;
-      case GLFW_KEY_1: return GL::Key::Key_1;
-      case GLFW_KEY_2: return GL::Key::Key_2;
-      case GLFW_KEY_3: return GL::Key::Key_3;
-      case GLFW_KEY_4: return GL::Key::Key_4;
-      case GLFW_KEY_5: return GL::Key::Key_5;
-      case GLFW_KEY_6: return GL::Key::Key_6;
-      case GLFW_KEY_7: return GL::Key::Key_7;
-      case GLFW_KEY_8: return GL::Key::Key_8;
-      case GLFW_KEY_9: return GL::Key::Key_9;
-
-      case GLFW_KEY_ESCAPE:  return GL::Key::Key_ESCAPE;
-    }
-
-  return GL::Key::Key_0;
-}
-// clang-format on
-
-// clang-format off
 GL::KeyAction toKeyAction (int action)
 {
   switch (action)
@@ -102,7 +79,7 @@ private:
 
 void keyCallback (GLFWwindow *window, int key, int /*scancode*/, int action, int /*mode*/)
 {
-  GL::EventCallback::keyCallback (GLFWWindowContainer::get_instance ().find (*window), GL::KeyEvent (toKey (key), toKeyAction (action)));
+  GL::EventCallback::keyCallback (GLFWWindowContainer::get_instance ().find (*window), GL::KeyEvent (static_cast<GL::Key> (key), static_cast<GL::KeyAction> (action)));
 }
 
 void resizeCallback (GLFWwindow *window, int width, int height)

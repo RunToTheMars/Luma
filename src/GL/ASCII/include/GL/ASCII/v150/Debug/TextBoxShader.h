@@ -1,31 +1,33 @@
 #pragma once
 
+#include "Common.h"
+
 namespace GL
 {
 namespace ASCII
 {
 namespace v150
 {
-class DebugShader
+namespace Debug
+{
+class TextBoxShader
 {
 public:
-  DebugShader () noexcept;
-  DebugShader (const DebugShader &) = delete;
-  DebugShader (DebugShader &&) = delete;
-  ~DebugShader () noexcept;
+  TextBoxShader () noexcept;
+  TextBoxShader (const TextBoxShader &) = delete;
+  TextBoxShader (TextBoxShader &&) = delete;
+  ~TextBoxShader () noexcept;
 
-  DebugShader &operator= (const DebugShader &) = delete;
-  DebugShader &operator= (DebugShader &&) = delete;
+  TextBoxShader &operator= (const TextBoxShader &) = delete;
+  TextBoxShader &operator= (TextBoxShader &&) = delete;
 
   void init () noexcept;
-
-  static constexpr int glyphTextureWidth () { return 8; }
-  static constexpr int glyphTextureHeight () { return 16; }
 
   const float *position () const noexcept;
   const float *color () const noexcept;
   const float *backgroundColor () const noexcept;
   const float *size () const noexcept;
+  int boxWidth () const noexcept;
 
   /// -------------------------------
   /// \note Only for Inited
@@ -48,6 +50,8 @@ public:
 
   void setSize (const float *size) noexcept;
   void setSize (float width, float height) noexcept;
+
+  void setBoxWidth (int width) noexcept;
   /// -------------------------------
 
 private:
@@ -57,6 +61,7 @@ private:
   int mUniformColorLoc = 0;
   int mUniformBackgroundColorLoc = 0;
   int mUniformSizeLoc = 0;
+  int mUniformBoxWidthLoc = 0;
 
   int mAttributeCodeLoc = 0;
 
@@ -64,7 +69,10 @@ private:
   float mColor[4] = {0.f, 0.f, 0.f};
   float mBackgroundColor[4] = {0.f, 0.f, 0.f, 0.f};
   float mSize[2] = {0.f, 0.f};
+
+  int mBoxWidth = 16;
 };
+}  // namespace Debug
 }  // namespace v150
 }  // namespace ASCII
 }  // namespace GL

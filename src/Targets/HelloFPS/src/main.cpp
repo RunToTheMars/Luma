@@ -165,7 +165,7 @@ public:
 
   void keyEvent (const GL::KeyEvent &event) override
   {
-    if (event.key () == GL::Key::Key_ESCAPE && event.action () == GL::KeyAction::Press)
+    if (event.key () == GL::Key::Key_Escape && event.action () == GL::KeyAction::Press)
       close ();
   }
 };
