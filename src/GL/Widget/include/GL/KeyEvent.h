@@ -9,6 +9,12 @@ enum class KeyAction {
 };
 
 enum class Key {
+  Key_Space             = 32,                     /* GLFW_KEY_SPACE         */
+  Key_Apostrophe        = 39,      /* ' */        /* GLFW_KEY_APOSTROPHE    */
+  Key_Comma             = 44,      /* , */        /* GLFW_KEY_COMMA         */
+  Key_Minus             = 45,      /* - */        /* GLFW_KEY_MINUS         */
+  Key_Period            = 46,      /* . */        /* GLFW_KEY_PERIOD        */
+  Key_Slash             = 47,      /* / */        /* GLFW_KEY_SLASH         */
   Key_0                 = 48,      /* 0 */        /* GLFW_KEY_0             */
   Key_1                 = 49,      /* 1 */        /* GLFW_KEY_1             */
   Key_2                 = 50,      /* 2 */        /* GLFW_KEY_2             */

@@ -1,17 +1,18 @@
 #include "GL/ASCII/v150/Debug/TextBoxShader.h"
+#include "GL/Buffer.h"
 #include "GL/KeyEvent.h"
 #include "GL/ResizeEvent.h"
-#include "GL/Window.h"
-#include "GL/Buffer.h"
 #include "GL/VertexArray.h"
+#include "GL/Window.h"
 #include "Geometry/Size.h"
 #include <GL/glew.h>
+#include <array>
 #include <stdexcept>
 
 namespace
 {
-constexpr int TableWidth = 8;
-constexpr int TableHeight = 32;
+constexpr int Width = 32;
+constexpr int Height = 8;
 }
 
 class MyWindow : public GL::Window
@@ -19,6 +20,9 @@ class MyWindow : public GL::Window
   GL::ASCII::v150::Debug::TextBoxShader mTextBoxShader;
   GL::Buffer mTextVBO;
   GL::VertexArray mTextVAO;
+
+  std::array<char, Width * Height> mBuffer;
+  int mBufferSize = 0;
 
 public:
   MyWindow () noexcept = default;
@@ -36,40 +40,15 @@ public:
     mTextVAO.create ();
     mTextVAO.bind ();
 
-    /// ...
-    /// _065_A
-    /// _066_B_
-    /// ...
-    /// _120_x_
-    /// ...
-    char ASCIITable[7 * 256];
-    for (int pos = 0; pos < 256; pos++)
-      {
-        int h = pos / TableWidth;
-        int w = pos % TableWidth;
-
-        int num = w * TableHeight + h;
-
-        int posIndex = 7 * pos;
-
-        ASCIITable[posIndex + 0] = ' ';
-        ASCIITable[posIndex + 1] = '0' + static_cast<char> (num / 100);
-        ASCIITable[posIndex + 2] = '0' + static_cast<char> ((num / 10) % 10);
-        ASCIITable[posIndex + 3] = '0' + static_cast<char> (num % 10);
-        ASCIITable[posIndex + 4] = ' ';
-        ASCIITable[posIndex + 5] = static_cast<char> (num);
-        ASCIITable[posIndex + 6] = ' ';
-      }
-
     mTextVBO.create ();
     mTextVBO.bind ();
-    mTextVBO.allocate (ASCIITable, sizeof (ASCIITable), GL::Buffer::UsagePattern::StaticDraw);
+    mTextVBO.allocate (Width * Height, GL::Buffer::UsagePattern::DynamicDraw);
     mTextVBO.unbind ();
 
     mTextBoxShader.bind ();
     mTextBoxShader.setColor (0.f, 0.f, 0.f, 1.f);
     mTextBoxShader.setBackgroundColor (0.45f, 0.45f, 0.45f, 1.f);
-    mTextBoxShader.setBoxWidth (7 * TableWidth);
+    mTextBoxShader.setBoxWidth (Width);
     mTextBoxShader.unbind ();
   }
 
@@ -88,9 +67,11 @@ public:
     mTextBoxShader.setPosition (-1.f, 1.f - glyphSize[1], 0.f);
 
     mTextVBO.bind ();
+    mTextVBO.write (0, mBuffer.data (), mBufferSize);
+
     glEnableVertexAttribArray (mTextBoxShader.attributeCodeLocation ());
     glVertexAttribIPointer (mTextBoxShader.attributeCodeLocation (), 1, GL_UNSIGNED_BYTE, 0, nullptr); /// Use current binded GL_ARRAY_BUFFER
-    glDrawArrays (GL_POINTS /*mode*/, 0 /* first */, TableWidth * TableHeight * 7 /* count */);
+    glDrawArrays (GL_POINTS /*mode*/, 0 /* first */, mBufferSize /* count */);
     glDisableVertexAttribArray (mTextBoxShader.attributeCodeLocation ());
     mTextVBO.unbind ();
 
@@ -105,15 +86,48 @@ public:
 
   void keyEvent (const GL::KeyEvent &event) override
   {
-    if (event.key () == GL::Key::Key_ESCAPE && event.action () == GL::KeyAction::Press)
-      close ();
+    if (event.key () == GL::Key::Key_Escape && event.action () == GL::KeyAction::Press)
+      return close ();
+
+    int key_code = static_cast<int> (event.key ());
+    if ((static_cast<int> (GL::Key::Key_Space) <= key_code && key_code <= static_cast<int> (GL::Key::Key_GraveAcent))
+         && (event.action () == GL::KeyAction::Press || event.action () == GL::KeyAction::Repeat))
+      {
+        push (static_cast<char> (event.key ()));
+        return;
+      }
+
+    if ((   event.key () == GL::Key::Key_Delete
+         || event.key () == GL::Key::Key_BackSpace)
+        && (event.action () == GL::KeyAction::Press || event.action () == GL::KeyAction::Repeat))
+      {
+        pop ();
+        return;
+      }
+  }
+
+  void push (char c)
+  {
+    if (mBufferSize >= Width * Height)
+      return;
+
+    mBuffer[mBufferSize] = c;
+    mBufferSize++;
+  }
+
+  void pop ()
+  {
+    if (mBufferSize == 0)
+      return;
+
+    mBufferSize--;
   }
 };
 
 int main ()
 {
   MyWindow window;
-  window.create ({800, 600} /* size */, "Hello ASCII!")
+  window.create ({800, 600} /* size */, "Hello Terminal!")
         .setResizable (true)
         .setDecorated (true)
         .setVisible (true)
