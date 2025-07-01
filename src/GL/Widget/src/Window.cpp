@@ -4,7 +4,6 @@
 #include "GL/ResizeEvent.h"
 #include "GL/Widget.h"
 #include <GLFW/glfw3.h>
-#include <stdexcept>
 #include <unordered_map>
 
 namespace GL
@@ -20,38 +19,6 @@ public:
 
 namespace
 {
-
-// clang-format off
-int toGLFW (GL::WindowCreateConfig::Profile profile)
-{
-  switch (profile)
-    {
-      using m = GL::WindowCreateConfig::Profile;
-      case m::ANY   : return GLFW_OPENGL_ANY_PROFILE;
-      case m::CORE  : return GLFW_OPENGL_CORE_PROFILE;
-      case m::COMPAT: return GLFW_OPENGL_COMPAT_PROFILE;
-    }
-
-  throw std::runtime_error ("Invalid Profile");
-  return GLFW_OPENGL_ANY_PROFILE;
-}
-// clang-format on
-
-// clang-format off
-GL::KeyAction toKeyAction (int action)
-{
-  switch (action)
-    {
-      case GLFW_PRESS  : return GL::KeyAction::Press;
-      case GLFW_RELEASE: return GL::KeyAction::Release;
-      case GLFW_REPEAT : return GL::KeyAction::Repeat;
-    }
-
-  throw std::runtime_error ("Invalid KeyAction");
-  return GL::KeyAction::Repeat;
-}
-// clang-format on
-
 class GLFWWindowContainer
 {
 public:
@@ -261,7 +228,7 @@ WindowCreateConfig &WindowCreateConfig::setFloating (bool val)
 
 WindowCreateConfig &WindowCreateConfig::setOpenGLProfile (Profile profile)
 {
-  glfwWindowHint (GLFW_OPENGL_PROFILE, toGLFW (profile));
+  glfwWindowHint (GLFW_OPENGL_PROFILE, static_cast<int> (profile));
   return *this;
 }
 

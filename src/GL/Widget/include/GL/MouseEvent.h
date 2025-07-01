@@ -19,16 +19,17 @@ enum class MouseButton {
   BUTTON_CENTER = BUTTON_3,
 };
 
-class MouseEvent {
+class MouseEvent
+{
 public:
-  MouseEvent (GL::MouseButton button, const Geometry::PointF &position) : m_button (button), m_position (position) {}
+  MouseEvent (GL::MouseButton button, const Geometry::PointF &position) : mButton (button), mPosition (position) {}
   ~MouseEvent () = default;
 
-  const GL::MouseButton button () const { return m_button; }
-  const Geometry::PointF &position () const { return m_position; }
+  const GL::MouseButton button () const { return mButton; }
+  const Geometry::PointF &position () const { return mPosition; }
 
 private:
-  GL::MouseButton m_button;
-  Geometry::PointF m_position;
+  GL::MouseButton mButton;
+  Geometry::PointF mPosition;
 };
 } // namespace GL

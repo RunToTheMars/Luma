@@ -187,9 +187,9 @@ int main ()
       .setVersionMajor (3)
       .setVersionMinor (3)
 #ifdef COREPROFILE
-      .setOpenGLProfile (GL::WindowCreateConfig::Profile::CORE);
+      .setOpenGLProfile (GL::WindowCreateConfig::Profile::Core);
 #else
-      .setOpenGLProfile (GL::WindowCreateConfig::Profile::COMPAT);
+      .setOpenGLProfile (GL::WindowCreateConfig::Profile::Compat);
 #endif
   window.exec ();
 }

@@ -5,22 +5,64 @@
 
 namespace GL
 {
-Widget::Widget (Widget *parent) : m_size (80, 60), m_parent (parent) {}
+Widget::Widget (Widget *parent) : mSize (80, 60), mParent (parent)
+{
+}
+
 Widget::~Widget () = default;
 
-const Geometry::Size &Widget::size () const { return m_size; }
+bool Widget::isEnabled () const
+{
+  return mIsEnabled;
+}
 
-void Widget::setParent (Widget *parent) { m_parent = parent; }
+void Widget::setEnabled (bool enable)
+{
+  mIsEnabled = enable;
+}
+
+bool Widget::isVisible () const
+{
+  return mIsVisible;
+}
+
+void Widget::setVisible (bool visible)
+{
+  mIsVisible = visible;
+}
+
+Geometry::Size Widget::size () const
+{
+  return mSize;
+}
+
+void Widget::setParent (Widget *parent)
+{
+  mParent = parent;
+}
+
 GL::Window *Widget::window () const
 {
-  if (m_parent)
-    return m_parent->window ();
+  if (mParent)
+    return mParent->window ();
 
   return nullptr;
 }
 
-void Widget::resizeEvent (const GL::ResizeEvent &event) { m_size = event.size (); }
-void Widget::keyEvent (const GL::KeyEvent & /*event*/) {}
-void Widget::mouseEvent (const GL::MouseEvent & /*event*/) {}
-void Widget::renderEvent () {}
+void Widget::resizeEvent (const GL::ResizeEvent &event)
+{
+  mSize = event.size ();
+}
+
+void Widget::keyEvent (const GL::KeyEvent & /*event*/)
+{
+}
+
+void Widget::mouseEvent (const GL::MouseEvent & /*event*/)
+{
+}
+
+void Widget::renderEvent ()
+{
+}
 }  // namespace GL

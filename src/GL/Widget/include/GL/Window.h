@@ -69,9 +69,9 @@ public:
   /// Context
   enum class Profile
   {
-    ANY,
-    CORE,
-    COMPAT
+    Any    = 0,          /* GLFW_OPENGL_ANY_PROFILE    */
+    Core   = 0x00032001, /* GLFW_OPENGL_CORE_PROFILE   */
+    Compat = 0x00032002  /* GLFW_OPENGL_COMPAT_PROFILE */
   };
 
   WindowCreateConfig &setOpenGLProfile (Profile profile);

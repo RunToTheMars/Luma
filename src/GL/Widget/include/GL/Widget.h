@@ -21,7 +21,13 @@ public:
   Widget (Widget &&) = delete;
   Widget &operator= (Widget &&) = delete;
 
-  const Geometry::Size &size () const;
+  bool isEnabled () const;
+  void setEnabled (bool enable);
+
+  bool isVisible () const;
+  void setVisible (bool visible);
+
+  Geometry::Size size () const;
 
   void setParent (Widget *parent);
   GL::Window *window () const;
@@ -33,8 +39,12 @@ protected:
   virtual void renderEvent ();
 
 private:
-  Widget *m_parent = nullptr;
-  Geometry::Size m_size;
+  Widget *mParent = nullptr;
+
+  bool mIsEnabled = true;
+  bool mIsVisible = true;
+
+  Geometry::Size mSize;
 };
 
 }  // namespace GL

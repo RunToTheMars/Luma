@@ -122,6 +122,6 @@ int main ()
         .setAutoIconify (true)
         .setVersionMajor (3)
         .setVersionMinor (3)
-        .setOpenGLProfile (GL::WindowCreateConfig::Profile::CORE);
+        .setOpenGLProfile (GL::WindowCreateConfig::Profile::Core);
   window.exec ();
 }

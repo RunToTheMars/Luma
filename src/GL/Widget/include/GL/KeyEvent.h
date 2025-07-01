@@ -117,14 +117,14 @@ enum class Key {
 class KeyEvent
 {
 public:
-  KeyEvent (Key key, KeyAction action) : m_key (key), m_action (action) {}
+  KeyEvent (Key key, KeyAction action) : mKey (key), mAction (action) {}
   ~KeyEvent () = default;
 
-  const Key key () const { return m_key; }
-  const KeyAction action () const { return m_action; }
+  const Key key () const { return mKey; }
+  const KeyAction action () const { return mAction; }
 
 private:
-  const Key m_key;
-  const KeyAction m_action;
+  const Key mKey;
+  const KeyAction mAction;
 };
 }
