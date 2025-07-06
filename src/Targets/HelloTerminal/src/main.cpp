@@ -1,10 +1,9 @@
 #include "GL/ASCII/v150/Debug/TextBoxShader.h"
 #include "GL/Buffer.h"
 #include "GL/KeyEvent.h"
-#include "GL/ResizeEvent.h"
 #include "GL/VertexArray.h"
+#include "GL/Widget.h"
 #include "GL/Window.h"
-#include "Geometry/Size.h"
 #include <GL/glew.h>
 #include <array>
 #include <stdexcept>
@@ -15,7 +14,7 @@ constexpr int Width = 32;
 constexpr int Height = 8;
 }
 
-class MyWindow : public GL::Window
+class MainWidget : public GL::Widget
 {
   GL::ASCII::v150::Debug::TextBoxShader mTextBoxShader;
   GL::Buffer mTextVBO;
@@ -25,12 +24,12 @@ class MyWindow : public GL::Window
   int mBufferSize = 0;
 
 public:
-  MyWindow () noexcept = default;
-  ~MyWindow () noexcept override
+  MainWidget () noexcept = default;
+  ~MainWidget () noexcept override
   {
   }
 
-  void init () override
+  void init ()
   {
     if (glewInit () != GLEW_OK)
       throw std::runtime_error ("Can't init glew");
@@ -60,8 +59,8 @@ public:
     mTextBoxShader.bind ();
 
     constexpr float scale = 2.;
-    float glyphSize[2] = {scale * 2.f * GL::ASCII::v150::Debug::glyphTextureWidth () / size ().width (),
-                          scale * 2.f * GL::ASCII::v150::Debug::glyphTextureHeight () / size ().height ()};
+    float glyphSize[2] = {scale * 2.f * GL::ASCII::v150::Debug::glyphTextureWidth () / GL::Window::getInstance ().size ().width (),
+                          scale * 2.f * GL::ASCII::v150::Debug::glyphTextureHeight () / GL::Window::getInstance ().size ().height ()};
 
     mTextBoxShader.setSize (glyphSize);
     mTextBoxShader.setPosition (-1.f, 1.f - glyphSize[1], 0.f);
@@ -78,16 +77,10 @@ public:
     mTextBoxShader.unbind ();
   }
 
-  void resizeEvent (const GL::ResizeEvent &event) override
-  {
-    glViewport (0, 0, event.size ().width (), event.size ().height ());
-    GL::Widget::resizeEvent (event);
-  }
-
   void keyEvent (const GL::KeyEvent &event) override
   {
     if (event.key () == GL::Key::Key_Escape && event.action () == GL::KeyAction::Press)
-      return close ();
+      return GL::Window::getInstance ().close ();
 
     int key_code = static_cast<int> (event.key ());
     if ((static_cast<int> (GL::Key::Key_Space) <= key_code && key_code <= static_cast<int> (GL::Key::Key_GraveAcent))
@@ -126,16 +119,21 @@ public:
 
 int main ()
 {
-  MyWindow window;
-  window.create ({800, 600} /* size */, "Hello Terminal!")
-        .setResizable (true)
-        .setDecorated (true)
-        .setVisible (true)
-        .setMaximized (true)
-        .setFocused (true)
-        .setAutoIconify (true)
-        .setVersionMajor (3)
-        .setVersionMinor (3)
-        .setOpenGLProfile (GL::WindowCreateConfig::Profile::Core);
-  window.exec ();
+  GL::Window::getInstance ().create ({800, 600} /* size */, "Hello Terminal!")
+   .setResizable (true)
+   .setDecorated (true)
+   .setVisible (true)
+   .setMaximized (true)
+   .setFocused (true)
+   .setAutoIconify (true)
+   .setVersionMajor (3)
+   .setVersionMinor (3)
+   .setOpenGLProfile (GL::WindowCreateConfig::Profile::Core);
+
+  if (glewInit () != GLEW_OK)
+    throw std::runtime_error ("Can't init glew");
+
+  std::unique_ptr<MainWidget> mainWidget = std::make_unique<MainWidget> ();
+  mainWidget->init ();
+  GL::Window::getInstance ().open (std::move (mainWidget));
 }

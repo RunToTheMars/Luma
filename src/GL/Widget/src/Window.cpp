@@ -1,63 +1,15 @@
 #include "GL/Window.h"
 #include "GL/KeyEvent.h"
 #include "GL/MouseEvent.h"
-#include "GL/ResizeEvent.h"
 #include "GL/Widget.h"
 #include <GLFW/glfw3.h>
-#include <unordered_map>
+#include "GL/Widget.h"
 
-namespace GL
-{
-class EventCallback
-{
-public:
-  static void resizeCallback (GL::Window &window, const GL::ResizeEvent &event) { window.resizeEvent (event); }
-  static void keyCallback (GL::Window &window, const GL::KeyEvent &event) { window.keyEvent (event); }
-  static void mouseCallback (GL::Window &window, const GL::MouseEvent &event) { window.mouseEvent (event); }
-};
-}
 
 namespace
 {
-class GLFWWindowContainer
-{
-public:
-  static GLFWWindowContainer &get_instance ()
-  {
-    static GLFWWindowContainer container;
-    return container;
-  }
-
-  void add (GLFWwindow &glfwwindow, GL::Window &window) { m_data.emplace (&glfwwindow, &window); }
-  void remove (GLFWwindow &glfwwindow) { m_data.erase (&glfwwindow); }
-
-  GL::Window &find (GLFWwindow &glfwwindow)
-  {
-    auto it = m_data.find (&glfwwindow);
-    return *it->second;
-  }
-
-private:
-  GLFWWindowContainer () = default;
-  ~GLFWWindowContainer () = default;
-
-  std::unordered_map<GLFWwindow *, GL::Window *> m_data;
-};
-
-void keyCallback (GLFWwindow *window, int key, int /*scancode*/, int action, int /*mode*/)
-{
-  GL::EventCallback::keyCallback (GLFWWindowContainer::get_instance ().find (*window), GL::KeyEvent (static_cast<GL::Key> (key), static_cast<GL::KeyAction> (action)));
-}
-
-void resizeCallback (GLFWwindow *window, int width, int height)
-{
-  GL::EventCallback::resizeCallback (GLFWWindowContainer::get_instance ().find (*window), GL::ResizeEvent (Geometry::Size (width, height)));
-}
-
-// void mouseCallback (GLFWwindow *window, int width, int height)
-// {
-//   GL::EventCallback::resizeCallback (GLFWWindowContainer::get_instance ().find (*window), GL::ResizeEvent (Geometry::Size (width, height)));
-// }
+GLFWwindow *globalGLFWWindow = nullptr;
+GL::Window *globalWindow = nullptr;
 }  // namespace
 
 namespace
@@ -68,51 +20,57 @@ namespace
 namespace GL
 {
 
-class WindowImpl
+Window &Window::getInstance ()
 {
-public:
-  GLFWwindow *window = nullptr;
-};
+  static Window window;
+  return window;
+}
 
-Window::Window () : m_pimpl (std::make_unique<WindowImpl> ()) {}
-
-Window::~Window ()
+Window::Window () noexcept
 {
-  if (GLFWwindow *window = m_pimpl->window)
-    {
-      glfwDestroyWindow (window);
-      GLFWWindowContainer::get_instance ().remove (*window);
-    }
+  globalWindow = this;
+}
+
+Window::~Window () noexcept
+{
+  if (globalGLFWWindow)
+    glfwDestroyWindow (globalGLFWWindow);
 }
 
 WindowCreateConfig Window::create (const Geometry::Size &size, const char *title)
 {
-  return WindowCreateConfig (*this, size, title);
+  return WindowCreateConfig (size, title);
 }
 
-void Window::init () {}
-void Window::renderEvent () {}
-void Window::resizeEvent (const ResizeEvent & /*event*/) {}
-void Window::keyEvent (const KeyEvent & /*event*/) {}
-void Window::mouseEvent (const MouseEvent & /*event*/) {}
-void Window::exec ()
+void Window::open (std::unique_ptr<GL::Widget> widget)
 {
-  glfwMakeContextCurrent (m_pimpl->window);
-  glfwSwapInterval (0);
-  init ();
+  mWidget = std::move (widget);
 
-  while (!glfwWindowShouldClose (m_pimpl->window))
+  while (!glfwWindowShouldClose (globalGLFWWindow))
     {
-      renderEvent ();
-      glfwSwapBuffers (m_pimpl->window);
+      mWidget->renderEventPrivate ();
+      glfwSwapBuffers (globalGLFWWindow);
       glfwPollEvents ();
     }
 }
 
-void Window::close () { glfwSetWindowShouldClose (m_pimpl->window, GL_TRUE); }
+void Window::close ()
+{
+  glfwSetWindowShouldClose (globalGLFWWindow, GL_TRUE);
+}
 
-WindowCreateConfig::WindowCreateConfig (GL::Window &window, const Geometry::Size &size, const char *title)
-  : m_window (window), m_size (size), m_title (title)
+GL::Widget *Window::widget ()
+{
+  return mWidget.get ();
+}
+
+Geometry::Size Window::size () const
+{
+  return mSize;
+}
+
+WindowCreateConfig::WindowCreateConfig (const Geometry::Size &size, const char *title)
+  : mSize (size), mTitle (title)
 {
   glfwInit ();
   glfwDefaultWindowHints ();
@@ -120,14 +78,25 @@ WindowCreateConfig::WindowCreateConfig (GL::Window &window, const Geometry::Size
 
 WindowCreateConfig::~WindowCreateConfig ()
 {
-  m_window.m_pimpl->window = glfwCreateWindow (m_size.width (), m_size.height (), m_title, nullptr, nullptr);
-  GLFWWindowContainer::get_instance ().add (*m_window.m_pimpl->window, m_window);
+  globalGLFWWindow = glfwCreateWindow (mSize.width (), mSize.height (), mTitle, nullptr, nullptr);
 
-  glfwGetWindowSize (m_window.m_pimpl->window, &m_size.rwidth (), &m_size.rheight ());
-  resizeCallback (m_window.m_pimpl->window, m_size.width (), m_size.height ());
+  glfwGetWindowSize (globalGLFWWindow, &globalWindow->mSize.rwidth (), &globalWindow->mSize.rheight ());
+  globalWindow->sizeChanged.notify (globalWindow->mSize);
 
-  glfwSetKeyCallback (m_window.m_pimpl->window, keyCallback);
-  glfwSetWindowSizeCallback (m_window.m_pimpl->window, resizeCallback);
+  glfwSetKeyCallback (globalGLFWWindow, [] (GLFWwindow */*window*/, int key, int /*scancode*/, int action, int /*mode*/) {
+    globalWindow->mWidget->keyEventPrivate (GL::KeyEvent (static_cast<GL::Key> (key), static_cast<GL::KeyAction> (action)));
+  });
+
+  glfwSetWindowSizeCallback (globalGLFWWindow, [] (GLFWwindow * /*window*/, int width, int height) {
+    if (width != globalWindow->mSize.width () || height != globalWindow->mSize.height ())
+      {
+        globalWindow->mSize = Geometry::Size (width, height);
+        globalWindow->sizeChanged.notify (globalWindow->mSize);
+      }
+  });
+
+  glfwMakeContextCurrent (globalGLFWWindow);
+  glfwSwapInterval (0);
 }
 
 WindowCreateConfig &WindowCreateConfig::setRedBits (int val)

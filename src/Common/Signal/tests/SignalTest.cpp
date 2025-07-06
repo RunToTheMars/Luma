@@ -1,32 +1,48 @@
 #include "Common/Signal.h"
 #include <gtest/gtest.h>
 
-TEST (Signal, OneNotify)
+TEST (Signal, VoidNotify)
 {
+  Common::Signal<>::Connection connection;
   Common::Signal<> buttonClicked;
 
   int x = 0;
-  Common::Signal<>::Connection connection = buttonClicked.connect ([&] { x++; });
+  connection = buttonClicked.connect ([&] { x++; });
 
   buttonClicked.notify ();
   EXPECT_EQ (x, 1);
 
   buttonClicked.notify ();
   EXPECT_EQ (x, 2);
+
+  int y = 0;
+  connection = buttonClicked.connect ([&] { y++; });
+
+  buttonClicked.notify ();
+  EXPECT_EQ (x, 2);
+  EXPECT_EQ (y, 1);
 }
 
-TEST (Signal, OneNotifyArg)
+TEST (Signal, IntNotify)
 {
+  Common::Signal<int>::Connection connection;
   Common::Signal<int> buttonClicked;
 
   int x = 0;
-  Common::Signal<int>::Connection connection = buttonClicked.connect ([&] (int signal) { x = signal; });
+  connection = buttonClicked.connect ([&] (int val) { x = val; });
 
-  buttonClicked.notify (10);
-  EXPECT_EQ (x, 10);
+  buttonClicked.notify (1);
+  EXPECT_EQ (x, 1);
 
-  buttonClicked.notify (30);
-  EXPECT_EQ (x, 30);
+  buttonClicked.notify (2);
+  EXPECT_EQ (x, 2);
+
+  int y = 0;
+  connection = buttonClicked.connect ([&] (int val) { y = val; });
+
+  buttonClicked.notify (1);
+  EXPECT_EQ (x, 2);
+  EXPECT_EQ (y, 1);
 }
 
 TEST (Signal, TwoNotify)

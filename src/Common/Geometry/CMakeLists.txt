@@ -5,7 +5,7 @@ project(GLGeometry
         DESCRIPTION "OpenGL Geometry"
         LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 17)          # Версия стандарта С++
+set(CMAKE_CXX_STANDARD 20)          # Версия стандарта С++
 set(CMAKE_CXX_STANDARD_REQUIRED ON) # Обязательно ли использовать именно этот стандарт, или можно выше.
 
 add_library (LibCommon_Geometry

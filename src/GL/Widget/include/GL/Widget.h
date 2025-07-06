@@ -1,19 +1,21 @@
 #pragma once
 
-#include "Geometry/Size.h"
+#include "Common/Signal.h"
+#include "Geometry/Rect.h"
+#include <memory>
+#include <vector>
 
 namespace GL
 {
-class Window;
-class ResizeEvent;
 class KeyEvent;
 class MouseEvent;
+class WindowCreateConfig;
 
 class Widget
 {
 public:
-  Widget (Widget *parent = nullptr);
-  virtual ~Widget ();
+  Widget () noexcept;
+  virtual ~Widget () noexcept;
 
   Widget (const Widget &) = delete;
   Widget &operator= (const Widget &) = delete;
@@ -21,30 +23,38 @@ public:
   Widget (Widget &&) = delete;
   Widget &operator= (Widget &&) = delete;
 
-  bool isEnabled () const;
-  void setEnabled (bool enable);
-
   bool isVisible () const;
   void setVisible (bool visible);
 
-  Geometry::Size size () const;
+  Geometry::Rect rect () const;
+  void setRect (const Geometry::Rect &rect);
 
-  void setParent (Widget *parent);
-  GL::Window *window () const;
+  void addWidget (std::unique_ptr<Widget> widget);
+  bool hasWidget (const Widget *widget) const;
+  std::unique_ptr<Widget> releaseWidget (const Widget *widget);
+
+/// signals
+public:
+  Common::Signal<Geometry::Rect> rectChanged;
 
 protected:
-  virtual void resizeEvent (const ResizeEvent &event);
   virtual void keyEvent (const KeyEvent &event);
-  virtual void mouseEvent (const MouseEvent &event);
+  virtual bool mouseEvent (const MouseEvent &event);
   virtual void renderEvent ();
 
 private:
-  Widget *mParent = nullptr;
+  friend class WindowCreateConfig;
+  friend class Window;
+  void keyEventPrivate (const KeyEvent &event);
+  bool mouseEventPrivate (const MouseEvent &event);
+  void renderEventPrivate ();
 
-  bool mIsEnabled = true;
+private:
+  Widget *mParent = nullptr;
   bool mIsVisible = true;
 
-  Geometry::Size mSize;
+  Geometry::Rect mRect;
+  std::vector<std::unique_ptr<Widget>> mChildrens;
 };
 
 }  // namespace GL

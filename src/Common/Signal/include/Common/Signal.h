@@ -15,27 +15,25 @@ public:
   class Connection
   {
   public:
+    Connection () noexcept = default;
+    Connection (Connection &&other) noexcept;
+    ~Connection () noexcept;
+
+    Connection &operator= (Connection &&) noexcept;
+
+    [[nodiscard]] TemporaryDisconnector temporaryDisconnect () noexcept;
+
+  private:
     Connection (const Connection &) = delete;
-    Connection (Connection &&) = default;
-    ~Connection ()
-    {
-      if (m_signal)
-        std::erase (m_signal->m_connections, this);
-    }
-
     Connection &operator= (const Connection &) = delete;
-    Connection &operator= (Connection &&) = delete;
 
-    [[nodiscard]] TemporaryDisconnector temporaryDisconnect () { return TemporaryDisconnector (m_handler); }
-
-  private:
     friend class Signal;
-    Connection (Handler &&handler, Signal &s) : m_handler (std::move (handler)), m_signal (&s) {}
-    Connection (const Handler &handler, Signal &s) : m_handler (handler), m_signal (&s) {}
+    Connection (Handler &&handler, Signal &s) noexcept;
+    Connection (const Handler &handler, Signal &s) noexcept;
 
   private:
-    Handler m_handler = [] (Args...) {};
-    Signal *m_signal = nullptr;
+    Handler mHandler = [] (Args...) {};
+    Signal *mSignal = nullptr;
   };
 
   class TemporaryDisconnector
@@ -43,21 +41,21 @@ public:
   public:
     TemporaryDisconnector (const TemporaryDisconnector &) = delete;
     TemporaryDisconnector (TemporaryDisconnector &&) = delete;
-    ~TemporaryDisconnector () { m_targetHandler = std::move (m_handler); }
+    ~TemporaryDisconnector () { mTargetHandler = std::move (mHandler); }
 
     TemporaryDisconnector &operator= (const TemporaryDisconnector &) = delete;
     TemporaryDisconnector &operator= (TemporaryDisconnector &&) = delete;
 
   private:
     friend class Connection;
-    TemporaryDisconnector (Handler &handler) : m_targetHandler (handler), m_handler (std::move (handler))
+    TemporaryDisconnector (Handler &handler) : mTargetHandler (handler), mHandler (std::move (handler))
     {
-      m_targetHandler = [] (Args...) {};
+      mTargetHandler = [] (Args...) {};
     }
 
   private:
-    Handler &m_targetHandler;
-    Handler m_handler;
+    Handler &mTargetHandler;
+    Handler mHandler;
   };
 
   Signal ();
@@ -74,8 +72,81 @@ public:
   void notify (Args... args);
 
 private:
-  std::vector<Connection *> m_connections;
+  std::vector<Connection *> mConnections;
 };
+
+//----------------------------------------------
+
+template<typename... Args>
+Signal<Args...>::Connection::Connection (Signal<Args...>::Connection &&other) noexcept
+{
+  mHandler = std::move (other.mHandler);
+  mSignal = other.mSignal;
+  other.mSignal = nullptr;
+
+  if (mSignal)
+    {
+      for (Connection *&connection : mSignal->mConnections)
+        {
+          if (connection == &other)
+            {
+              connection = this;
+              return;
+            }
+        }
+    }
+}
+
+template<typename... Args>
+Signal<Args...>::Connection &Signal<Args...>::Connection::operator= (Connection &&rhs) noexcept
+{
+  if (this == &rhs)
+    return *this;
+
+  if (mSignal)
+    std::erase (mSignal->mConnections, this);
+
+  mHandler = std::move (rhs.mHandler);
+  mSignal = rhs.mSignal;
+  rhs.mSignal = nullptr;
+
+  if (mSignal)
+    {
+      for (Connection *&connection : mSignal->mConnections)
+        {
+          if (connection == &rhs)
+            {
+              connection = this;
+              break;
+            }
+        }
+    }
+
+  return *this;
+}
+
+template<typename... Args>
+Signal<Args...>::Connection::~Connection () noexcept
+{
+  if (mSignal)
+    std::erase (mSignal->mConnections, this);
+}
+
+template<typename... Args>
+Signal<Args...>::TemporaryDisconnector Signal<Args...>::Connection::temporaryDisconnect () noexcept
+{
+  return TemporaryDisconnector (mHandler);
+}
+
+template<typename... Args>
+Signal<Args...>::Connection::Connection (Signal<Args...>::Handler &&handler, Signal<Args...> &s) noexcept : mHandler (std::move (handler)), mSignal (&s)
+{
+}
+
+template<typename... Args>
+Signal<Args...>::Connection::Connection (const Signal<Args...>::Handler &handler, Signal &s) noexcept : mHandler (handler), mSignal (&s)
+{
+}
 
 //----------------------------------------------
 
@@ -87,12 +158,12 @@ Signal<Args...>::Signal ()
 template<typename... Args>
 Signal<Args...>::~Signal ()
 {
-  for (Connection *con : m_connections)
+  for (Connection *con : mConnections)
     {
-      con->m_signal = nullptr;
+      con->mSignal = nullptr;
 
       /// \note Clear Handler
-      con->m_handler = {};
+      con->mHandler = {};
     }
 }
 
@@ -100,7 +171,7 @@ template<typename... Args>
 typename Signal<Args...>::Connection Signal<Args...>::connect (const Handler &handler)
 {
   Connection con (handler, *this);
-  m_connections.emplace_back (&con);
+  mConnections.emplace_back (&con);
   return con;
 }
 
@@ -108,14 +179,14 @@ template<typename... Args>
 typename Signal<Args...>::Connection Signal<Args...>::connect (Handler &&handler)
 {
   Connection con (std::move (handler), *this);
-  m_connections.emplace_back (&con);
+  mConnections.emplace_back (&con);
   return con;
 }
 
 template<typename... Args>
 void Signal<Args...>::notify (Args... args)
 {
-  for (Connection *con : m_connections)
-    con->m_handler (args...);
+  for (Connection *con : mConnections)
+    con->mHandler (args...);
 }
 }  // namespace utils

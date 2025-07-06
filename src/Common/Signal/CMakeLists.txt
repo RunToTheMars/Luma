@@ -9,7 +9,9 @@ project(LibCommonSignalGtests
 set(CMAKE_CXX_STANDARD 20)          # Версия стандарта С++
 set(CMAKE_CXX_STANDARD_REQUIRED ON) # Обязательно ли использовать именно этот стандарт, или можно выше.
 
-#include_directories (include)
+add_library (LibCommon_Signal
+             src/Empty.cpp)
+target_include_directories(LibCommon_Signal PUBLIC include)
 
 enable_testing()
 
@@ -23,7 +25,8 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(googletest)
 
 # Тесты
-add_executable(LibCommon_Signal_Gtests tests/SignalTest.cpp)
+add_executable(LibCommon_Signal_Gtests tests/SignalTest.cpp
+  src/Empty.cpp)
 target_link_libraries(LibCommon_Signal_Gtests PRIVATE gtest_main)
 target_include_directories(LibCommon_Signal_Gtests PRIVATE include ${gtest_SOURCE_DIR} ${gtest_SOURCE_DIR}/include )
 

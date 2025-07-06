@@ -18,6 +18,10 @@ public:
   constexpr inline const Size &size () const;
   constexpr inline Size &rsize ();
 
+  constexpr inline bool contains (const Point &point) const;
+
+  constexpr inline bool operator== (const Rect &) const;
+
 private:
   Point m_leftBottom;
   Size m_size;
@@ -34,5 +38,16 @@ constexpr inline Point &Rect::rleftBottom () { return m_leftBottom; }
 
 constexpr inline const Size &Rect::size () const { return m_size; }
 constexpr inline Size &Rect::rsize () { return m_size; }
+
+constexpr inline bool Rect::contains (const Point &point) const
+{
+  return    m_leftBottom.x () <= point.x () &&  point.x () <= m_leftBottom.x () + m_size.width ()
+         && m_leftBottom.y () <= point.y () &&  point.y () <= m_leftBottom.y () + m_size.height ();
+}
+
+constexpr inline bool Rect::operator== (const Rect &rect) const
+{
+  return m_size == rect.m_size && m_leftBottom == rect.m_leftBottom;
+}
 
 }  // namespace Geometry

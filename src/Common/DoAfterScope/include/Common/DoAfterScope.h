@@ -8,11 +8,11 @@ template<typename FUNC>
 class DoAfterScope
 {
 public:
-  DoAfterScope (FUNC &&func) : m_func (std::move (func)) {}
-  ~DoAfterScope () { m_func (); }
+  DoAfterScope (FUNC &&func) : mFunc (std::move (mFunc)) {}
+  ~DoAfterScope () { mFunc (); }
 
 private:
-  FUNC m_func;
+  FUNC mFunc;
 };
 }
 

@@ -5,7 +5,7 @@ project(HelloWorld                      # PROJECT_NAME
         DESCRIPTION "Try to use OpenGL" # PROJECT_DESCRIPTION
         LANGUAGES CXX)                  # Активирует поддержку C++
 
-set(CMAKE_CXX_STANDARD 17)          # Версия стандарта С++
+set(CMAKE_CXX_STANDARD 20)          # Версия стандарта С++
 set(CMAKE_CXX_STANDARD_REQUIRED ON) # Обязательно ли использовать именно этот стандарт, или можно выше.
 
 add_subdirectory(src/Common/Geometry)
@@ -21,6 +21,5 @@ add_subdirectory(src/GL/Widget)
 
 add_subdirectory(src/Targets/1_HelloWindow)
 add_subdirectory(src/Targets/2_HelloTriangle)
-add_subdirectory(src/Targets/HelloFPS)
 add_subdirectory(src/Targets/HelloASCII)
 add_subdirectory(src/Targets/HelloTerminal)

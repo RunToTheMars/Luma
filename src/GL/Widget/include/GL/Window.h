@@ -1,7 +1,7 @@
 #pragma once
 
-#include "GL/ResizeEvent.h"
-#include "GL/Widget.h"
+#include "Common/Signal.h"
+#include "Geometry/Size.h"
 #include <memory>
 
 namespace GL
@@ -9,11 +9,28 @@ namespace GL
 class WindowCreateConfig;
 class WindowImpl;
 class EventCallback;
-class Window: public GL::Widget
+class Widget;
+
+class Window
 {
 public:
-  Window ();
-  ~Window ();
+  static Window &getInstance ();
+
+  WindowCreateConfig create (const Geometry::Size &size, const char *title);
+
+  void open (std::unique_ptr<GL::Widget> widget);
+  void close ();
+  GL::Widget *widget ();
+
+  Geometry::Size size () const;
+
+/// signals
+public:
+  Common::Signal<Geometry::Size> sizeChanged;
+
+private:
+  Window () noexcept;
+  ~Window () noexcept;
 
   Window (const Window &) = delete;
   Window &operator= (const Window &) = delete;
@@ -21,24 +38,12 @@ public:
   Window (Window &&) = delete;
   Window &operator= (Window &&) = delete;
 
-  WindowCreateConfig create (const Geometry::Size &size, const char *title);
-  void exec ();
-  void close ();
-
-private:
-  virtual void init ();
-
-protected:
-  void resizeEvent (const ResizeEvent &event) override;
-  void keyEvent (const KeyEvent &event) override;
-  void mouseEvent (const MouseEvent &event) override;
-  void renderEvent () override;
-
 private:
   friend class GL::WindowCreateConfig;
   friend class GL::EventCallback;
 
-  std::unique_ptr<WindowImpl> m_pimpl;
+  std::unique_ptr<GL::Widget> mWidget;
+  Geometry::Size mSize;
 };
 
 class WindowCreateConfig
@@ -80,12 +85,10 @@ public:
 
 private:
   friend class GL::Window;
-
-  WindowCreateConfig (GL::Window &window, const Geometry::Size &size, const char *title);
+  WindowCreateConfig (const Geometry::Size &size, const char *title);
 
 private:
-  GL::Window &m_window;
-  Geometry::Size m_size = {800, 600};
-  const char *m_title = nullptr;
+  Geometry::Size mSize = {800, 600};
+  const char *mTitle = nullptr;
 };
 }  // namespace GL

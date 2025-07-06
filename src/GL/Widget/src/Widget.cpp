@@ -1,29 +1,31 @@
 #include "GL/Widget.h"
 #include "GL/KeyEvent.h"
 #include "GL/MouseEvent.h"
-#include "GL/ResizeEvent.h"
+#include <algorithm>
 
 namespace GL
 {
-Widget::Widget (Widget *parent) : mSize (80, 60), mParent (parent)
+Widget::Widget () noexcept
 {
 }
 
-Widget::~Widget () = default;
-
-bool Widget::isEnabled () const
+Widget::~Widget () noexcept
 {
-  return mIsEnabled;
-}
-
-void Widget::setEnabled (bool enable)
-{
-  mIsEnabled = enable;
 }
 
 bool Widget::isVisible () const
 {
-  return mIsVisible;
+  const Widget *widget = this;
+
+  while (widget)
+    {
+      if (!widget->mIsVisible)
+        return false;
+
+      widget = widget->mParent;
+    }
+
+  return true;
 }
 
 void Widget::setVisible (bool visible)
@@ -31,35 +33,111 @@ void Widget::setVisible (bool visible)
   mIsVisible = visible;
 }
 
-Geometry::Size Widget::size () const
+Geometry::Rect Widget::rect () const
 {
-  return mSize;
+  return mRect;
 }
 
-void Widget::setParent (Widget *parent)
+void Widget::setRect (const Geometry::Rect &rect)
 {
-  mParent = parent;
+  if (mRect == rect)
+    return;
+
+  mRect = rect;
+  rectChanged.notify (rect);
 }
 
-GL::Window *Widget::window () const
+void Widget::addWidget (std::unique_ptr<Widget> widget)
 {
-  if (mParent)
-    return mParent->window ();
+  if (!widget)
+    return;
 
-  return nullptr;
+  widget->mParent = this;
+  mChildrens.emplace_back (std::move (widget));
 }
 
-void Widget::resizeEvent (const GL::ResizeEvent &event)
+bool Widget::hasWidget (const Widget *widget) const
 {
-  mSize = event.size ();
+  auto it = std::find_if (mChildrens.begin (), mChildrens.end (), [&] (const std::unique_ptr<Widget> &children) { return children.get () == widget; });
+  return it != mChildrens.end ();
 }
+
+std::unique_ptr<Widget> Widget::releaseWidget (const Widget *widget)
+{
+  auto it = std::find_if (mChildrens.begin (), mChildrens.end (), [&] (const std::unique_ptr<Widget> &children) { return children.get () == widget; });
+  std::unique_ptr<Widget> releasedWidget = std::move (*it);
+  mChildrens.erase (it);
+  return releasedWidget;
+}
+
+void Widget::keyEventPrivate (const KeyEvent &event)
+{
+  if (!isVisible ())
+    return;
+
+  keyEvent (event);
+}
+
+bool Widget::mouseEventPrivate (const MouseEvent &event)
+{
+  if (!mIsVisible)
+    return false;
+
+  if (!mRect.contains (event.position ().toPoint ()))
+    return false;
+
+  if (mouseEvent (event))
+    return true;
+
+  for (const std::unique_ptr<Widget> &children : mChildrens)
+    {
+      if (children->mouseEventPrivate (event))
+        return true;
+    }
+
+  return false;
+}
+
+void Widget::renderEventPrivate ()
+{
+  if (!isVisible ())
+    return;
+
+  renderEvent ();
+  for (const std::unique_ptr<Widget> &children : mChildrens)
+    children->renderEvent ();
+}
+
+// Geometry::Size Widget::size () const
+// {
+//   return mSize;
+// }
+
+// void Widget::setParent (Widget *parent)
+// {
+//   mParent = parent;
+// }
+
+// GL::Window *Widget::window () const
+// {
+//   if (mParent)
+//     return mParent->window ();
+
+//   return nullptr;
+// }
+
+// void Widget::resizeEvent (const GL::ResizeEvent &event)
+// {
+//   mSize = event.size ();
+// }
 
 void Widget::keyEvent (const GL::KeyEvent & /*event*/)
 {
 }
 
-void Widget::mouseEvent (const GL::MouseEvent & /*event*/)
+bool Widget::mouseEvent (const GL::MouseEvent & /*event*/)
 {
+  return false;
 }
 
 void Widget::renderEvent ()

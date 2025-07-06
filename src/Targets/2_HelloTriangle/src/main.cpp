@@ -1,8 +1,8 @@
-#include "GL/KeyEvent.h"
-#include "GL/ResizeEvent.h"
-#include "GL/Window.h"
 #include "GL/Buffer.h"
+#include "GL/KeyEvent.h"
 #include "GL/ShaderProgram.h"
+#include "GL/Widget.h"
+#include "GL/Window.h"
 #ifdef COREPROFILE
 #include "GL/VertexArray.h"
 #endif
@@ -10,6 +10,7 @@
 #include <GL/glew.h>
 #include <stdexcept>
 #include <stdio.h>
+#include "GL/Widgets/FrameRateWidget.h"
 
 namespace
 {
@@ -89,7 +90,7 @@ private:
 };
 }  // namespace
 
-class MyWindow : public GL::Window
+class MainWidget : public GL::Widget
 {
   TriangleShader mTriangleShader;
   GL::Buffer mTriangleVertexVBO;
@@ -100,10 +101,10 @@ class MyWindow : public GL::Window
 #endif
 
 public:
-  MyWindow () noexcept = default;
-  ~MyWindow () noexcept override {}
+  MainWidget () noexcept = default;
+  ~MainWidget () noexcept override {}
 
-  void init () override
+  void init ()
   {
     if (glewInit () != GLEW_OK)
       throw std::runtime_error ("Can't init glew");
@@ -154,6 +155,8 @@ public:
 
     mTriangleColorVBO.unbind ();
 #endif // COREPROFILE
+
+    addWidget (std::make_unique<GL::FrameRateWidget> ());
   }
 
   void renderEvent () override
@@ -188,26 +191,19 @@ public:
 #endif
   }
 
-  void resizeEvent (const GL::ResizeEvent &event) override
-  {
-    glViewport (0, 0, event.size ().width (), event.size ().height ());
-    GL::Widget::resizeEvent (event);
-  }
-
   void keyEvent (const GL::KeyEvent &event) override
   {
     if (event.key () == GL::Key::Key_Escape && event.action () == GL::KeyAction::Press)
-      close ();
+      GL::Window::getInstance ().close ();
   }
 };
 
 int main ()
 {
-    MyWindow window;
 #ifdef COREPROFILE
-    window.create ({800, 600} /* size */, "Hello Triangle! (Core)")
+   GL::Window::getInstance ().create ({800, 600} /* size */, "Hello Triangle! (Core)")
 #else
-    window.create ({800, 600} /* size */, "Hello Triangle! (Compatibility)")
+   GL::Window::getInstance ().create ({800, 600} /* size */, "Hello Triangle! (Compatibility)")
 #endif
     .setResizable (true)
     .setDecorated (true)
@@ -222,5 +218,8 @@ int main ()
 #else
     .setOpenGLProfile (GL::WindowCreateConfig::Profile::Compat);
 #endif
-    window.exec ();
+
+  std::unique_ptr<MainWidget> mainWidget = std::make_unique<MainWidget> ();
+  mainWidget->init ();
+  GL::Window::getInstance ().open (std::move (mainWidget));
 }

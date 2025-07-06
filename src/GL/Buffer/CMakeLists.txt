@@ -5,7 +5,7 @@ project(GLEWCPP
         DESCRIPTION "GLEW C++ Library"
         LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 17)          # Версия стандарта С++
+set(CMAKE_CXX_STANDARD 20)          # Версия стандарта С++
 set(CMAKE_CXX_STANDARD_REQUIRED ON) # Обязательно ли использовать именно этот стандарт, или можно выше.
 
 add_library (LibGL_Buffer
