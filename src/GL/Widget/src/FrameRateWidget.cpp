@@ -16,10 +16,10 @@ class FrameRateWidgetImpl
 public:
   FrameRateWidgetImpl () noexcept;
 
-  void init () noexcept;
   void renderEvent () noexcept;
 
 private:
+  void init () noexcept;
   void WindowSizeChangedHandle (const Geometry::Size &size) noexcept;
 
 private:

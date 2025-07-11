@@ -1,119 +1,132 @@
-#include "GL/Widgets/LabelWidget.h"
-#include "Common/Signal.h"
-#include "GL/ASCII/v150/Debug/TextLineShader.h"
-#include "GL/Buffer.h"
-#include "GL/VertexArray.h"
-#include "GL/Window.h"
-#include <GL/glew.h>
-#include <chrono>
+// #include "GL/Widgets/LabelWidget.h"
+// #include "Common/Signal.h"
+// #include "GL/ASCII/v150/Debug/TextLineShader.h"
+// #include "GL/Buffer.h"
+// #include "GL/VertexArray.h"
+// #include "GL/Window.h"
+// #include <GL/glew.h>
+// #include <chrono>
+// #include <cstring>
 
-namespace GL
-{
-class LabelWidgetImpl
-{
-  static constexpr double scale = 1.;
+// namespace GL
+// {
+// class LabelWidgetImpl
+// {
+//   static constexpr double scale = 1.;
 
-public:
-  LabelWidgetImpl () noexcept;
+// public:
+//   LabelWidgetImpl () noexcept;
 
-  void init () noexcept;
-  void renderEvent () noexcept;
+//   void init () noexcept;
 
-private:
-  void WindowSizeChangedHandle (const Geometry::Size &size) noexcept;
+//   const std::string &text () const noexcept;
+//   void setText (std::string text) noexcept;
 
-private:
-  std::chrono::steady_clock::time_point mStartTime;
-  int mFrames = 0;
+//   void renderEvent () noexcept;
 
-  GL::ASCII::v150::Debug::TextLineShader mTextLineShader;
-  GL::Buffer mTextVBO;
-  GL::VertexArray mTextVAO;
+// private:
+//   void WindowSizeChangedHandle (const Geometry::Size &size) noexcept;
 
-  Common::Signal<Geometry::Size>::Connection mWindowSizeChanged;
-};
+// private:
+//   std::string mText;
+//   bool mUpdateNeeded = false;
 
-LabelWidgetImpl::LabelWidgetImpl () noexcept
-  : mWindowSizeChanged (GL::Window::getInstance ().sizeChanged.connect ([&] (const Geometry::Size &size) { WindowSizeChangedHandle (size); }))
-{
-  init ();
-}
+//   GL::ASCII::v150::Debug::TextLineShader mTextLineShader;
+//   Common::Signal<Geometry::Size>::Connection mWindowSizeChanged;
+// };
 
-void LabelWidgetImpl::init () noexcept
-{
-  mTextLineShader.init ();
+// LabelWidgetImpl::LabelWidgetImpl () noexcept
+//   : mWindowSizeChanged (GL::Window::getInstance ().sizeChanged.connect ([&] (const Geometry::Size &size) { WindowSizeChangedHandle (size); }))
+// {
+//   init ();
+// }
 
-  mTextLineShader.bind ();
-  mTextLineShader.setPosition (-1.f, -1.f, 0.f);
-  mTextLineShader.setColor (0.f, 1.f, 0.f, 1.f);
-  mTextLineShader.setBackgroundColor (1.f, 1.f, 1.f, 0.f);
-  mTextLineShader.setSize (
-    scale * 2.f * GL::ASCII::v150::Debug::glyphTextureWidth () / GL::Window::getInstance ().size ().width (),
-    scale * 2.f * GL::ASCII::v150::Debug::glyphTextureHeight () / GL::Window::getInstance ().size ().height ());
-  mTextLineShader.unbind ();
+// void LabelWidgetImpl::init () noexcept
+// {
+//   mTextLineShader.init ();
 
-  mTextVAO.create ();
-  mTextVAO.bind ();
+//   mTextLineShader.bind ();
+//   mTextLineShader.setPosition (-1.f, -1.f, 0.f);
+//   mTextLineShader.setColor (0.f, 1.f, 0.f, 1.f);
+//   mTextLineShader.setBackgroundColor (1.f, 1.f, 1.f, 0.f);
+//   mTextLineShader.setSize (
+//     scale * 2.f * GL::ASCII::v150::Debug::glyphTextureWidth () / GL::Window::getInstance ().size ().width (),
+//     scale * 2.f * GL::ASCII::v150::Debug::glyphTextureHeight () / GL::Window::getInstance ().size ().height ());
+//   mTextLineShader.unbind ();
 
-  mTextVBO.create ();
-  mTextVBO.bind ();
-  mTextVBO.allocate (9, GL::Buffer::UsagePattern::StreamDraw);
+//   mTextVAO.create ();
+//   mTextVAO.bind ();
 
-  glVertexAttribIPointer (mTextLineShader.attributeCodeLocation (), 1, GL_UNSIGNED_BYTE, 0, (void *) nullptr);  /// Use current binded GL_ARRAY_BUFFER
-  glEnableVertexAttribArray (mTextLineShader.attributeCodeLocation ());
+//   mTextVBO.create ();
+//   mTextVBO.bind ();
+//   mTextVBO.allocate (9, GL::Buffer::UsagePattern::StreamDraw);
 
-  mTextVAO.unbind ();
+//   glVertexAttribIPointer (mTextLineShader.attributeCodeLocation (), 1, GL_UNSIGNED_BYTE, 0, (void *) nullptr);  /// Use current binded GL_ARRAY_BUFFER
+//   glEnableVertexAttribArray (mTextLineShader.attributeCodeLocation ());
 
-  mStartTime = std::chrono::steady_clock::now ();
-  mFrames = 0;
-}
+//   mTextVAO.unbind ();
 
-void LabelWidgetImpl::renderEvent () noexcept
-{
-  glEnable (GL_BLEND);
-  glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//   mStartTime = std::chrono::steady_clock::now ();
+//   mFrames = 0;
+// }
 
-  mTextVAO.bind ();
+// const std::string &LabelWidgetImpl::text () const noexcept
+// {
+//   return mText;
+// }
 
-  std::chrono::steady_clock::time_point curTime = std::chrono::steady_clock::now ();
-  const std::chrono::duration<double> elapsedSeconds{curTime - mStartTime};
-  mFrames++;
-  double dur_secs = elapsedSeconds.count ();
-  if (dur_secs > 1.)
-    {
-      double fps = static_cast<double> (mFrames) / dur_secs;
-      mStartTime = curTime;
-      char text[16];
-      sprintf (text, "FPS:%4d", static_cast<int> (fps));
+// void LabelWidgetImpl::setText (std::string text) noexcept
+// {
+//   mText = std::move (text);
+//   mUpdateNeeded = true;
+// }
 
-      mTextVBO.write (0, text, 9);
-      mFrames = 0;
-    }
+// void LabelWidgetImpl::renderEvent () noexcept
+// {
+//   glEnable (GL_BLEND);
+//   glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-  mTextLineShader.bind ();
-  glDrawArrays (GL_POINTS /*mode*/, 0 /* first */, 9 /* count */);
-  mTextLineShader.unbind ();
+//   mTextVAO.bind ();
 
-  mTextVAO.unbind ();
-}
+//   std::chrono::steady_clock::time_point curTime = std::chrono::steady_clock::now ();
+//   const std::chrono::duration<double> elapsedSeconds{curTime - mStartTime};
+//   mFrames++;
+//   double dur_secs = elapsedSeconds.count ();
+//   if (dur_secs > 1.)
+//     {
+//       double fps = static_cast<double> (mFrames) / dur_secs;
+//       mStartTime = curTime;
+//       char text[16];
+//       sprintf (text, "FPS:%4d", static_cast<int> (fps));
 
-void LabelWidgetImpl::WindowSizeChangedHandle (const Geometry::Size &size) noexcept
-{
-  mTextLineShader.bind ();
-  mTextLineShader.setSize (
-      scale * 2.f * GL::ASCII::v150::Debug::glyphTextureWidth () / GL::Window::getInstance ().size ().width (),
-      scale * 2.f * GL::ASCII::v150::Debug::glyphTextureHeight () / GL::Window::getInstance ().size ().height ());
-  mTextLineShader.unbind ();
-}
+//       mTextVBO.write (0, text, 9);
+//       mFrames = 0;
+//     }
 
-LabelWidget::LabelWidget () noexcept: mPimpl (std::make_unique<LabelWidgetImpl> ())
-{
-}
+//   mTextLineShader.bind ();
+//   glDrawArrays (GL_POINTS /*mode*/, 0 /* first */, 9 /* count */);
+//   mTextLineShader.unbind ();
 
-LabelWidget::~LabelWidget () noexcept = default;
+//   mTextVAO.unbind ();
+// }
 
-void LabelWidget::renderEvent () noexcept
-{
-  mPimpl->renderEvent ();
-}
-}
+// void LabelWidgetImpl::WindowSizeChangedHandle (const Geometry::Size &size) noexcept
+// {
+//   mTextLineShader.bind ();
+//   mTextLineShader.setSize (
+//       scale * 2.f * GL::ASCII::v150::Debug::glyphTextureWidth () / GL::Window::getInstance ().size ().width (),
+//       scale * 2.f * GL::ASCII::v150::Debug::glyphTextureHeight () / GL::Window::getInstance ().size ().height ());
+//   mTextLineShader.unbind ();
+// }
+
+// LabelWidget::LabelWidget () noexcept: mPimpl (std::make_unique<LabelWidgetImpl> ())
+// {
+// }
+
+// LabelWidget::~LabelWidget () noexcept = default;
+
+// void LabelWidget::renderEvent () noexcept
+// {
+//   mPimpl->renderEvent ();
+// }
+// }

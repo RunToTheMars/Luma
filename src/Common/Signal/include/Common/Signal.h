@@ -2,64 +2,123 @@
 
 #include <functional>
 #include <vector>
+#include <memory>
 
 namespace Common
 {
+
+template<typename... Args>
+class Signal;
+class Slots;
+
+
+class Connection
+{
+public:
+  Connection () noexcept = default;
+  Connection (const Connection &) noexcept = default;
+  Connection (Connection &&) noexcept = default;
+  ~Connection () noexcept { mDisconnectFunc (this); }
+
+  void setEnabled (bool enabled) { *mEnabled = enabled; }
+  bool isEnabled () const { return *mEnabled; }
+
+  Connection &operator= (const Connection &) noexcept;
+  Connection &operator= (Connection &&) noexcept;
+
+private:
+  template<typename... Args>
+  friend class Common::Signal;
+  friend class Common::Slots;
+
+  void setDisconnectFunc (std::function<void (const Connection *)> &&disconnectFunc)
+  {
+    mDisconnectFunc = std::move (disconnectFunc);
+  }
+
+  void setEnabledFlag (bool &enabledFlag)
+  {
+    mEnabled = &enabledFlag;
+  }
+
+  std::function<void (const Connection *)> mDisconnectFunc;
+  bool *mEnabled = nullptr;
+};
+
+class Slots
+{
+public:
+  inline Slots () noexcept = default;
+  inline ~Slots () noexcept = default;
+
+  template<typename... Args>
+  inline std::weak_ptr<Connection> connect (Signal<Args...> &signal, Signal<Args...>::Handler handler) noexcept;
+  inline void disconnectAll () noexcept;
+  inline void setConnetionsEnabled (bool enabled);
+
+private:
+  Slots (const Slots &) = delete;
+  Slots (Slots &&) = delete;
+
+  Slots &operator= (const Slots &) = delete;
+  Slots &operator= (Slots &&) = delete;
+
+private:
+  std::vector<std::shared_ptr<Connection>> mConnections;
+};
+
 template<typename... Args>
 class Signal
 {
 public:
   using Handler = std::function<void (Args...)>;
 
-  class TemporaryDisconnector;
-  class Connection
+  inline Signal () noexcept = default;
+  inline ~Signal () noexcept = default;
+
+  inline void notify (Args... args);
+
+
+private:
+  friend class Slots;
+  class ConnectionHandler
   {
   public:
-    Connection () noexcept = default;
-    Connection (Connection &&other) noexcept;
-    ~Connection () noexcept;
+    Connection *connectionPtr;
+    Handler handler;
+    bool enabled = true;
 
-    Connection &operator= (Connection &&) noexcept;
-
-    [[nodiscard]] TemporaryDisconnector temporaryDisconnect () noexcept;
-
-  private:
-    Connection (const Connection &) = delete;
-    Connection &operator= (const Connection &) = delete;
-
-    friend class Signal;
-    Connection (Handler &&handler, Signal &s) noexcept;
-    Connection (const Handler &handler, Signal &s) noexcept;
-
-  private:
-    Handler mHandler = [] (Args...) {};
-    Signal *mSignal = nullptr;
-  };
-
-  class TemporaryDisconnector
-  {
-  public:
-    TemporaryDisconnector (const TemporaryDisconnector &) = delete;
-    TemporaryDisconnector (TemporaryDisconnector &&) = delete;
-    ~TemporaryDisconnector () { mTargetHandler = std::move (mHandler); }
-
-    TemporaryDisconnector &operator= (const TemporaryDisconnector &) = delete;
-    TemporaryDisconnector &operator= (TemporaryDisconnector &&) = delete;
-
-  private:
-    friend class Connection;
-    TemporaryDisconnector (Handler &handler) : mTargetHandler (handler), mHandler (std::move (handler))
+    ConnectionHandler (Connection *connectionPtr, Handler &&handler) noexcept: connectionPtr (connectionPtr), handler (std::move (handler))
     {
-      mTargetHandler = [] (Args...) {};
+      connectionPtr->setEnabledFlag (enabled);
+    }
+    ConnectionHandler (const ConnectionHandler &) = delete;
+    ConnectionHandler (ConnectionHandler &&other) noexcept: connectionPtr (other.connectionPtr), handler (std::move (other.handler)), enabled (other.enabled)
+    {
+      connectionPtr->setEnabledFlag (enabled);
+      other.connectionPtr = nullptr;
     }
 
-  private:
-    Handler &mTargetHandler;
-    Handler mHandler;
+    ConnectionHandler &operator= (const ConnectionHandler &) = delete;
+    ConnectionHandler &operator= (ConnectionHandler &&rhs)
+    {
+      connectionPtr->setEnabledFlag (enabled);
+      connectionPtr = rhs.connectionPtr;
+      handler = std::move (rhs.handler);
+      enabled = rhs.enabled;
+
+      rhs.connectionPtr = nullptr;
+      return *this;
+    }
+
+    ~ConnectionHandler ()
+    {
+      if (connectionPtr)
+        connectionPtr->setDisconnectFunc ([] (const Connection *) {});
+    }
   };
 
-  Signal ();
-  ~Signal ();
+  std::shared_ptr<Connection> connect (Handler &&handler);
 
   Signal (const Signal &) = delete;
   Signal (Signal &&) = delete;
@@ -67,126 +126,54 @@ public:
   Signal &operator= (const Signal &) = delete;
   Signal &operator= (Signal &&) = delete;
 
-  [[nodiscard]] Connection connect (Handler &&);
-  [[nodiscard]] Connection connect (const Handler &);
-  void notify (Args... args);
-
-private:
-  std::vector<Connection *> mConnections;
+  std::vector<Common::Signal<Args...>::ConnectionHandler> mConnectionHandlers;
 };
 
 //----------------------------------------------
 
 template<typename... Args>
-Signal<Args...>::Connection::Connection (Signal<Args...>::Connection &&other) noexcept
+inline std::weak_ptr<Connection> Slots::connect (Signal<Args...> &signal, Signal<Args...>::Handler handler) noexcept
 {
-  mHandler = std::move (other.mHandler);
-  mSignal = other.mSignal;
-  other.mSignal = nullptr;
-
-  if (mSignal)
-    {
-      for (Connection *&connection : mSignal->mConnections)
-        {
-          if (connection == &other)
-            {
-              connection = this;
-              return;
-            }
-        }
-    }
+  mConnections.emplace_back (signal.connect (std::move (handler)));
+  return mConnections.back ();
 }
 
-template<typename... Args>
-Signal<Args...>::Connection &Signal<Args...>::Connection::operator= (Connection &&rhs) noexcept
+inline void Slots::disconnectAll () noexcept
 {
-  if (this == &rhs)
-    return *this;
-
-  if (mSignal)
-    std::erase (mSignal->mConnections, this);
-
-  mHandler = std::move (rhs.mHandler);
-  mSignal = rhs.mSignal;
-  rhs.mSignal = nullptr;
-
-  if (mSignal)
-    {
-      for (Connection *&connection : mSignal->mConnections)
-        {
-          if (connection == &rhs)
-            {
-              connection = this;
-              break;
-            }
-        }
-    }
-
-  return *this;
+  mConnections.clear ();
 }
 
-template<typename... Args>
-Signal<Args...>::Connection::~Connection () noexcept
+inline void Slots::setConnetionsEnabled (bool enabled)
 {
-  if (mSignal)
-    std::erase (mSignal->mConnections, this);
-}
-
-template<typename... Args>
-Signal<Args...>::TemporaryDisconnector Signal<Args...>::Connection::temporaryDisconnect () noexcept
-{
-  return TemporaryDisconnector (mHandler);
-}
-
-template<typename... Args>
-Signal<Args...>::Connection::Connection (Signal<Args...>::Handler &&handler, Signal<Args...> &s) noexcept : mHandler (std::move (handler)), mSignal (&s)
-{
-}
-
-template<typename... Args>
-Signal<Args...>::Connection::Connection (const Signal<Args...>::Handler &handler, Signal &s) noexcept : mHandler (handler), mSignal (&s)
-{
+  for (std::shared_ptr<Connection> &connectionSptr : mConnections)
+    connectionSptr->setEnabled (enabled);
 }
 
 //----------------------------------------------
 
 template<typename... Args>
-Signal<Args...>::Signal ()
+std::shared_ptr<Connection> Signal<Args...>::connect (Handler &&handler)
 {
+  std::shared_ptr<Connection> connectionSptr = std::make_shared<Connection> ();
+  mConnectionHandlers.emplace_back (connectionSptr.get (), std::move (handler));
+  connectionSptr->setDisconnectFunc ([this] (const Connection *connection) {
+    std::erase_if (mConnectionHandlers, [&] (const Common::Signal<Args...>::ConnectionHandler &connectonHandler) {
+      return connectonHandler.connectionPtr == connection;
+    });
+
+    (void) connection;
+    return;
+  });
+  return connectionSptr;
 }
 
 template<typename... Args>
-Signal<Args...>::~Signal ()
+inline void Signal<Args...>::notify (Args... args)
 {
-  for (Connection *con : mConnections)
+  for (Common::Signal<Args...>::ConnectionHandler &connectionHandler : mConnectionHandlers)
     {
-      con->mSignal = nullptr;
-
-      /// \note Clear Handler
-      con->mHandler = {};
+      if (connectionHandler.enabled)
+        connectionHandler.handler (args...);
     }
-}
-
-template<typename... Args>
-typename Signal<Args...>::Connection Signal<Args...>::connect (const Handler &handler)
-{
-  Connection con (handler, *this);
-  mConnections.emplace_back (&con);
-  return con;
-}
-
-template<typename... Args>
-typename Signal<Args...>::Connection Signal<Args...>::connect (Handler &&handler)
-{
-  Connection con (std::move (handler), *this);
-  mConnections.emplace_back (&con);
-  return con;
-}
-
-template<typename... Args>
-void Signal<Args...>::notify (Args... args)
-{
-  for (Connection *con : mConnections)
-    con->mHandler (args...);
 }
 }  // namespace utils

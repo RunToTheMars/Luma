@@ -3,91 +3,133 @@
 
 TEST (Signal, VoidNotify)
 {
-  Common::Signal<>::Connection connection;
-  Common::Signal<> buttonClicked;
+  Common::Signal<> signal;
 
   int x = 0;
-  connection = buttonClicked.connect ([&] { x++; });
 
-  buttonClicked.notify ();
+  Common::Slots slots;
+  slots.connect (signal, [&] { x++; });
+
+  signal.notify ();
   EXPECT_EQ (x, 1);
 
-  buttonClicked.notify ();
+  signal.notify ();
   EXPECT_EQ (x, 2);
 
   int y = 0;
-  connection = buttonClicked.connect ([&] { y++; });
+  slots.connect (signal, [&] { y++; });
 
-  buttonClicked.notify ();
-  EXPECT_EQ (x, 2);
+  signal.notify ();
+  EXPECT_EQ (x, 3);
   EXPECT_EQ (y, 1);
 }
 
 TEST (Signal, IntNotify)
 {
-  Common::Signal<int>::Connection connection;
-  Common::Signal<int> buttonClicked;
+  Common::Slots slots;
+  Common::Signal<int> signal;
 
   int x = 0;
-  connection = buttonClicked.connect ([&] (int val) { x = val; });
+  slots.connect (signal, [&] (int i) { x = i; });
 
-  buttonClicked.notify (1);
+  signal.notify (1);
   EXPECT_EQ (x, 1);
 
-  buttonClicked.notify (2);
+  signal.notify (2);
   EXPECT_EQ (x, 2);
 
   int y = 0;
-  connection = buttonClicked.connect ([&] (int val) { y = val; });
+  slots.connect (signal, [&] (int i) { y = i; });
 
-  buttonClicked.notify (1);
-  EXPECT_EQ (x, 2);
+  signal.notify (3);
+  EXPECT_EQ (x, 3);
+  EXPECT_EQ (y, 3);
+}
+
+TEST (Signal, DisconnectAll)
+{
+  Common::Slots slots;
+  Common::Signal<> signal;
+
+  int x = 0;
+  int y = 0;
+  slots.connect (signal, [&] { x++; });
+  slots.connect (signal, [&] { y++; });
+
+  signal.notify ();
+  EXPECT_EQ (x, 1);
   EXPECT_EQ (y, 1);
-}
 
-TEST (Signal, TwoNotify)
-{
-  Common::Signal<> buttonClicked;
+  {
+    slots.setConnetionsEnabled (false);
+    signal.notify ();
+    EXPECT_EQ (x, 1);
+    EXPECT_EQ (y, 1);
+    slots.setConnetionsEnabled (true);
+  }
 
-  int x = 0;
-  Common::Signal<>::Connection connectionX = buttonClicked.connect ([&] { x++; });
-
-  buttonClicked.notify ();
-  EXPECT_EQ (x, 1);
-
-  int y = 0;
-  Common::Signal<>::Connection connectionY = buttonClicked.connect ([&] { y--; });
-
-  buttonClicked.notify ();
+  signal.notify ();
   EXPECT_EQ (x, 2);
-  EXPECT_EQ (y, -1);
+  EXPECT_EQ (y, 2);
 }
 
-TEST (Signal, DisconnectedNotify)
+TEST (Signal, DisconnectSingle)
 {
-  Common::Signal<> buttonClicked;
+  Common::Slots slots;
+  Common::Signal<> signal;
 
   int x = 0;
-  Common::Signal<>::Connection connection = buttonClicked.connect ([&] { x++; });
+  int y = 0;
+  std::weak_ptr<Common::Connection> connectionWptr = slots.connect (signal, [&] { x++; });
+  slots.connect (signal, [&] { y++; });
 
-  buttonClicked.notify ();
+  signal.notify ();
   EXPECT_EQ (x, 1);
+  EXPECT_EQ (y, 1);
 
-  auto disconnector = connection.temporaryDisconnect ();
+  {
+    std::shared_ptr<Common::Connection> connectionSptr = connectionWptr.lock ();
+    connectionSptr->setEnabled (false);
+    signal.notify ();
+    EXPECT_EQ (x, 1);
+    EXPECT_EQ (y, 2);
+    connectionSptr->setEnabled (true);
+  }
 
-  buttonClicked.notify ();
-  EXPECT_EQ (x, 1);
+  signal.notify ();
+  EXPECT_EQ (x, 2);
+  EXPECT_EQ (y, 3);
 }
 
-TEST (Signal, ConnectionLost)
+TEST (Signal, SlotsLost)
 {
-  Common::Signal<> buttonClicked = Common::Signal<> ();
+  Common::Signal<> signal = Common::Signal<> ();
 
   int x = 0;
   {
-    Common::Signal<>::Connection connection = buttonClicked.connect ([&] { x++; });
+    Common::Slots slots;
+    slots.connect (signal, [&] { x++; });
+
+    signal.notify ();
+    EXPECT_EQ (x, 1);
   }
 
-  buttonClicked.notify ();
-  EXPECT_EQ (x, 0);
+  signal.notify ();
+  EXPECT_EQ (x, 1);
+}
+
+TEST (Signal, SignalLost)
+{
+  Common::Slots slots;
+
+  int x = 0;
+  {
+    Common::Signal<> signal = Common::Signal<> ();
+    slots.connect (signal, [&] { x++; });
+
+    signal.notify ();
+    EXPECT_EQ (x, 1);
+  }
+
+  EXPECT_EQ (x, 1);
 }

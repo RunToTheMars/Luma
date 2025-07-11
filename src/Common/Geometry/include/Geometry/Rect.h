@@ -1,53 +1,33 @@
 #pragma once
 
-#include "Geometry/Point.h"
-#include "Geometry/Size.h"
+#include "Geometry/Rect_fwd.h"
+#include "Geometry/Vector.h"
 
-namespace Geometry
+namespace Geom
 {
-class Rect
+template <typename T>
+struct Rect
 {
-public:
-  constexpr inline Rect ();
-  constexpr inline Rect (const Point &leftBottom, const Size &size);
-  constexpr inline Rect (const Rect &);
+  Geom::Vector<T, 2> leftTop;
+  Geom::Vector<T, 2> size;
 
-  constexpr inline const Point &leftBottom () const;
-  constexpr inline Point &rleftBottom ();
-
-  constexpr inline const Size &size () const;
-  constexpr inline Size &rsize ();
-
-  constexpr inline bool contains (const Point &point) const;
-
-  constexpr inline bool operator== (const Rect &) const;
-
-private:
-  Point m_leftBottom;
-  Size m_size;
+  constexpr inline bool contains (const Geom::Vector<T, 2> &point) const;
+  constexpr inline bool operator== (const Rect &rhs) const;
 };
 
 //-----------------------------------------------------------------
 
-constexpr inline Rect::Rect () = default;
-constexpr inline Rect::Rect (const Point &leftBottom, const Size &size) : m_leftBottom (leftBottom), m_size (size) {}
-constexpr inline Rect::Rect (const Rect &rect) : m_leftBottom (rect.m_leftBottom), m_size (rect.m_size) {}
-
-constexpr inline const Point &Rect::leftBottom () const { return m_leftBottom; }
-constexpr inline Point &Rect::rleftBottom () { return m_leftBottom; }
-
-constexpr inline const Size &Rect::size () const { return m_size; }
-constexpr inline Size &Rect::rsize () { return m_size; }
-
-constexpr inline bool Rect::contains (const Point &point) const
+template<typename T>
+constexpr inline bool Rect<T>::contains (const Geom::Vector<T, 2> &point) const
 {
-  return    m_leftBottom.x () <= point.x () &&  point.x () <= m_leftBottom.x () + m_size.width ()
-         && m_leftBottom.y () <= point.y () &&  point.y () <= m_leftBottom.y () + m_size.height ();
+  return    leftTop[0] <= point[0] &&  point[0] <= leftTop[0] + size[0]
+         && leftTop[1] <= point[1] &&  point[1] <= leftTop[1] + size[1];
 }
 
-constexpr inline bool Rect::operator== (const Rect &rect) const
+template<typename T>
+constexpr inline bool Rect<T>::operator== (const Rect<T> &rhs) const
 {
-  return m_size == rect.m_size && m_leftBottom == rect.m_leftBottom;
+  return size == rhs.size && leftTop == rhs.leftTop;
 }
 
 }  // namespace Geometry

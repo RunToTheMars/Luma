@@ -23,7 +23,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
-add_executable(LibCommon_Geometry_Gtests tests/PointTest.cpp)
+add_executable(LibCommon_Geometry_Gtests tests/VectorTest.cpp)
 target_link_libraries(LibCommon_Geometry_Gtests PRIVATE gtest_main)
 target_include_directories(LibCommon_Geometry_Gtests PRIVATE include ${gtest_SOURCE_DIR} ${gtest_SOURCE_DIR}/include )
 

@@ -1,23 +1,24 @@
-#pragma once
+// #pragma once
 
-#include "GL/Widget.h"
-#include <memory>
+// #include "GL/Widget.h"
+// #include <memory>
 
-namespace GL
-{
-class LabelWidgetImpl;
-class LabelWidget : public GL::Widget
-{
-public:
-  LabelWidget () noexcept;
-  ~LabelWidget () noexcept override;
+// namespace GL
+// {
+// class LabelWidgetImpl;
+// class LabelWidget : public GL::Widget
+// {
+// public:
+//   LabelWidget () noexcept;
+//   ~LabelWidget () noexcept override;
 
-  void setText ();
-  void setPosition ();
+//   const std::string &text () const noexcept;
+//   void setText (std::string text) noexcept;
 
-  void renderEvent () noexcept override;
+// private:
+//   void renderEvent () noexcept override;
 
-private:
-  std::unique_ptr<LabelWidgetImpl> mPimpl;
-};
-}  // namespace GL
+// private:
+//   std::unique_ptr<LabelWidgetImpl> mPimpl;
+// };
+// }  // namespace GL

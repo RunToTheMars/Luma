@@ -7,8 +7,6 @@
 namespace GL
 {
 class WindowCreateConfig;
-class WindowImpl;
-class EventCallback;
 class Widget;
 
 class Window
@@ -18,9 +16,14 @@ public:
 
   WindowCreateConfig create (const Geometry::Size &size, const char *title);
 
-  void open (std::unique_ptr<GL::Widget> widget);
+  void exec (std::unique_ptr<GL::Widget> mainWidget);
+  GL::Widget *mainWidget ();
+
+  GL::Widget *targetWidget ();
+  void setTargetWidget (GL::Widget *widget);
+
+  void open ();
   void close ();
-  GL::Widget *widget ();
 
   Geometry::Size size () const;
 
@@ -40,9 +43,8 @@ private:
 
 private:
   friend class GL::WindowCreateConfig;
-  friend class GL::EventCallback;
 
-  std::unique_ptr<GL::Widget> mWidget;
+  std::unique_ptr<GL::Widget> mMainWidget;
   Geometry::Size mSize;
 };
 

@@ -123,7 +123,7 @@ int main ()
 
   std::unique_ptr<MainWidget> mainWidget = std::make_unique<MainWidget> ();
   mainWidget->init ();
-  GL::Window::getInstance ().open (std::move (mainWidget));
+  GL::Window::getInstance ().exec (std::move (mainWidget));
 
   // std::unique_ptr<GL::FrameRateWidget> frameRateWidget = std::make_unique<GL::FrameRateWidget> ();
   // frameRateWidget->init ();

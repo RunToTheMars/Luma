@@ -8,22 +8,15 @@ project(GLFWCPP
 set(CMAKE_CXX_STANDARD 20)          # Версия стандарта С++
 set(CMAKE_CXX_STANDARD_REQUIRED ON) # Обязательно ли использовать именно этот стандарт, или можно выше.
 
-add_subdirectory(glfw) # Подключение библиотеки glfw (выполняет CMakeLists, позволяет юзать их target)
-
 add_library (LibGL_Widget
-             src/Window.cpp
-             src/Widget.cpp
              src/FrameRateWidget.cpp
              src/LabelWidget.cpp
-
-
 
 )
 
 target_include_directories(LibGL_Widget PUBLIC include)
 
 target_link_libraries(LibGL_Widget
-                      PRIVATE glfw
                       PRIVATE libglew_static    # for widgets
                       PRIVATE LibGL_ASCII       # for widgets
                       PRIVATE LibGL_Buffer      # for widgets

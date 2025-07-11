@@ -42,16 +42,21 @@ WindowCreateConfig Window::create (const Geometry::Size &size, const char *title
   return WindowCreateConfig (size, title);
 }
 
-void Window::open (std::unique_ptr<GL::Widget> widget)
+void Window::exec (std::unique_ptr<GL::Widget> mainWidget)
 {
-  mWidget = std::move (widget);
+  mMainWidget = std::move (mainWidget);
 
   while (!glfwWindowShouldClose (globalGLFWWindow))
     {
-      mWidget->renderEventPrivate ();
+      mMainWidget->renderEventPrivate ();
       glfwSwapBuffers (globalGLFWWindow);
       glfwPollEvents ();
     }
+}
+
+void Window::open ()
+{
+  glfwSetWindowShouldClose (globalGLFWWindow, GL_FALSE);
 }
 
 void Window::close ()
@@ -59,9 +64,9 @@ void Window::close ()
   glfwSetWindowShouldClose (globalGLFWWindow, GL_TRUE);
 }
 
-GL::Widget *Window::widget ()
+GL::Widget *Window::mainWidget ()
 {
-  return mWidget.get ();
+  return mMainWidget.get ();
 }
 
 Geometry::Size Window::size () const
