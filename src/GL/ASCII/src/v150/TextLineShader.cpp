@@ -235,7 +235,8 @@ void TextLineShader::init () noexcept
 
 TextLineShader::~TextLineShader () noexcept
 {
-  glDeleteProgram (mProgramId);
+  if (mProgramId)
+    glDeleteProgram (mProgramId);
 }
 
 void TextLineShader::bind ()

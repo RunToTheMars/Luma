@@ -22,6 +22,7 @@ add_subdirectory(src/GL/GuiCore)
 
 add_subdirectory(src/Targets/HelloWindow)
 add_subdirectory(src/Targets/HelloWindowEvents)
+add_subdirectory(src/Targets/HelloWindowFPS)
 add_subdirectory(src/Targets/HelloTriangle)
 add_subdirectory(src/Targets/HelloASCII)
 add_subdirectory(src/Targets/HelloTerminal)
