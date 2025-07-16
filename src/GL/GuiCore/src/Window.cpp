@@ -191,6 +191,9 @@ void *createWindowImpl (GL::Window *window, const Geom::Vec2I &size, const char 
   glfwSetCursorEnterCallback        (impl, &GL::WindowEventDispatcher::WindowCursorEnterChangedHandle);
   glfwSetScrollCallback             (impl, &GL::WindowEventDispatcher::WindowScrollEventHandle);
 
+  glfwMakeContextCurrent (impl);
+  glfwSwapInterval (0);
+
   GL::ApplicationPrivate::allWindows.insert (window);
 
   return impl;
