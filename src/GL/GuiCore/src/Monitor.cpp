@@ -40,9 +40,13 @@ Geom::Vec2I Monitor::physicalSize () const
   return size;
 }
 
-void Monitor::contentScale (float *xScale, float *yScale) const
+Geom::Vec2F Monitor::contentScale () const
 {
-  glfwGetMonitorContentScale (toGLFWmonitor (mPimpl), xScale, yScale);
+  Geom::Vec2F scale;
+  glfwGetMonitorContentScale (toGLFWmonitor (mPimpl),
+                              &scale[0],
+                              &scale[1]);
+  return scale;
 }
 
 const char *Monitor::name () const

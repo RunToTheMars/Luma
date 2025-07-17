@@ -26,7 +26,7 @@ public:
   Geom::Vec2I pos () const;
   Geom::RectI workRect () const;
   Geom::Vec2I physicalSize () const;
-  void contentScale (float *xScale, float *yScale) const;
+  Geom::Vec2F contentScale () const;
   const char *name () const;
 
   GL::VideoMode videoMode () const;
