@@ -210,6 +210,7 @@ public:
   Common::Signal<> enterEvent;
   Common::Signal<> leaveEvent;
   Common::Signal<Geom::Vec2D> scrollEvent;
+  Common::Signal<> initEvent;
   Common::Signal<> renderEvent;
 
   Common::Signal<> destroyed;
