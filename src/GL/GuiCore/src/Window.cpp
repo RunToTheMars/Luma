@@ -203,7 +203,6 @@ GLFWwindow *createWindowImpl (GL::Window *window, const Geom::Vec2I &size, const
 
   glfwMakeContextCurrent (impl);
   glfwSwapInterval (0);
-  window->initEvent.notify ();
 
   GL::ApplicationPrivate::allWindows.insert (window);
 
