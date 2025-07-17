@@ -11,7 +11,7 @@
 GL::WindowHints createHints (bool isModal)
 {
   GL::WindowHints hints;
-  hints.profile = GL::WindowHints::Profile::Compat;
+  hints.profile = GL::Profile::Compat;
   hints.contextVersionMajor = 3;
   hints.contextVersionMinor = 3;
   hints.floating = isModal;
