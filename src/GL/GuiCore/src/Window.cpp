@@ -34,13 +34,15 @@ public:
   static void WindowPosChangedHandle (GLFWwindow *window, int xpos, int ypos)
   {
     GL::Window *GLwindow = toGLwindow (glfwGetWindowUserPointer (window));
-    GLwindow->moveEvent.notify (Geom::Vec2I {xpos, ypos});
+    GLwindow->mPos = {xpos, ypos};
+    GLwindow->moveEvent.notify (GLwindow->mPos);
   }
 
   static void WindowSizeChangedHandle (GLFWwindow *window, int width, int height)
   {
     GL::Window *GLwindow = toGLwindow (glfwGetWindowUserPointer (window));
-    GLwindow->resizeEvent.notify (Geom::Vec2I {width, height});
+    GLwindow->mSize = {width, height};
+    GLwindow->resizeEvent.notify (GLwindow->mSize);
   }
 
   static void WindowClosedHandle (GLFWwindow *window)
@@ -58,37 +60,41 @@ public:
   static void WindowFocusChangedHandle (GLFWwindow *window, int focused)
   {
     GL::Window *GLwindow = toGLwindow (glfwGetWindowUserPointer (window));
-    bool focusedBool = focused == GLFW_TRUE;
-    if (focusedBool)
+    GLwindow->mFocused = focused == GLFW_TRUE;
+    if (GLwindow->mFocused)
       GL::ApplicationPrivate::focusWindow = GLwindow;
     else if (GL::ApplicationPrivate::focusWindow == GLwindow)
       GL::ApplicationPrivate::focusWindow = nullptr;
 
-    GLwindow->focusEvent.notify (focusedBool);
+    GLwindow->focusEvent.notify (GLwindow->mFocused);
   }
 
   static void WindowIconifiedHandle (GLFWwindow *window, int iconified)
   {
     GL::Window *GLwindow = toGLwindow (glfwGetWindowUserPointer (window));
-    GLwindow->iconifyEvent.notify (iconified == GLFW_TRUE);
+    GLwindow->mIconified = iconified == GLFW_TRUE;
+    GLwindow->iconifyEvent.notify (GLwindow->mIconified);
   }
 
   static void WindowMaximizedHandle (GLFWwindow *window, int maximized)
   {
     GL::Window *GLwindow = toGLwindow (glfwGetWindowUserPointer (window));
-    GLwindow->maximizeEvent.notify (maximized == GLFW_TRUE);
+    GLwindow->mMaximized = maximized == GLFW_TRUE;
+    GLwindow->maximizeEvent.notify (GLwindow->mMaximized);
   }
 
   static void WindowFramebufferSizeChangedHandle (GLFWwindow *window, int width, int height)
   {
     GL::Window *GLwindow = toGLwindow (glfwGetWindowUserPointer (window));
-    GLwindow->framebufferResizeEvent.notify (Geom::Vec2I {width, height});
+    GLwindow->mFrameBufferSize = {width, height};
+    GLwindow->framebufferResizeEvent.notify (GLwindow->mFrameBufferSize);
   }
 
   static void WindowContentScaleChangedHandle (GLFWwindow *window, float xscale, float yscale)
   {
     GL::Window *GLwindow = toGLwindow (glfwGetWindowUserPointer (window));
-    GLwindow->scaleEvent.notify (xscale, yscale);
+    GLwindow->mContentScale = {xscale, yscale};
+    GLwindow->scaleEvent.notify (GLwindow->mContentScale);
   }
 
   static void WindowKeyEventHandle (GLFWwindow *window, int key, int scancode, int action, int mods)
@@ -109,14 +115,18 @@ public:
   static void WindowCursorPosChangedHandle (GLFWwindow *window, double xpos, double ypos)
   {
     GL::Window *GLwindow = toGLwindow (glfwGetWindowUserPointer (window));
-    notifyInputEvent (GLwindow, [&] { GLwindow->hoverEvent.notify (Geom::Vec2D {xpos, ypos}); });
+    notifyInputEvent (GLwindow, [&] {
+      GLwindow->mCursorPos = {xpos, ypos};
+      GLwindow->hoverEvent.notify (GLwindow->mCursorPos);
+    });
   }
 
   static void WindowCursorEnterChangedHandle (GLFWwindow *window, int entered)
   {
     GL::Window *GLwindow = toGLwindow (glfwGetWindowUserPointer (window));
     notifyInputEvent (GLwindow, [&] {
-      if (entered == GLFW_TRUE)
+      GLwindow->mHovered = entered == GLFW_TRUE;
+      if (GLwindow->mHovered)
         GLwindow->enterEvent.notify ();
       else
         GLwindow->leaveEvent.notify ();
@@ -133,7 +143,7 @@ public:
 
 namespace
 {
-void *createWindowImpl (GL::Window *window, const Geom::Vec2I &size, const char *title, GLFWmonitor *monitor, const GL::WindowHints &hints)
+GLFWwindow *createWindowImpl (GL::Window *window, const Geom::Vec2I &size, const char *title, GLFWmonitor *monitor, const GL::WindowHints &hints)
 {
   glfwWindowHint (GLFW_OPENGL_PROFILE       , static_cast<int> (hints.profile));
   glfwWindowHint (GLFW_CONTEXT_VERSION_MAJOR, hints.contextVersionMinor);
@@ -199,14 +209,75 @@ void *createWindowImpl (GL::Window *window, const Geom::Vec2I &size, const char 
   return impl;
 }
 
-void *createWindowImpl (GL::Window *window, const char *title, GLFWmonitor *monitor, const GL::VideoMode &videoMode)
+GL::WindowHints videoModeHints (const GL::VideoMode &videoMode)
 {
   GL::WindowHints hints;
   hints.redBits = videoMode.redBits ();
   hints.greenBits = videoMode.greenBits ();
   hints.blueBits = videoMode.blueBits ();
   hints.refreshRate = videoMode.refreshRate ();
-  return createWindowImpl (window, {videoMode.width (), videoMode.height ()}, title, monitor, hints);
+  return hints;
+}
+
+void initWindowParams (GLFWwindow *impl,
+                       const GL::WindowHints &hints,
+                       Geom::Vec2I &pos,
+                       Geom::Vec2I &size,
+                       Geom::Vec2D &cusorPos,
+                       Geom::Vec2I &frameBufferSize,
+                       Geom::Vec2F &contentScale,
+                       GL::Profile &profile,
+                       int &contextVersionMajor,
+                       int &contextVersionMinor,
+                       bool &resizable,
+                       bool &visible,
+                       bool &decorated,
+                       bool &focused,
+                       bool &iconified,
+                       bool &autoIconify,
+                       bool &floating,
+                       bool &maximized,
+                       bool &focusOnShow,
+                       bool &mousePassthrough,
+                       bool &doublebuffer,
+                       bool &transparentFrameBuffer,
+                       bool &hovered,
+                       float &opacity)
+{
+  glfwGetWindowPos (impl, &pos[0], &pos[1]);
+  glfwGetWindowSize (impl, &size[0], &size[1]);
+  glfwGetCursorPos (impl, &cusorPos[0], &cusorPos[1]);
+  glfwGetFramebufferSize (impl, &frameBufferSize[0], &frameBufferSize[1]);
+  glfwGetWindowContentScale (impl, &contentScale[0], &contentScale[1]);
+  opacity          = glfwGetWindowOpacity (impl);
+  iconified        = glfwGetWindowAttrib (impl, GLFW_ICONIFIED        ) == GLFW_TRUE;
+  visible          = glfwGetWindowAttrib (impl, GLFW_VISIBLE          ) == GLFW_TRUE;
+  focused          = glfwGetWindowAttrib (impl, GLFW_FOCUSED          ) == GLFW_TRUE;
+  autoIconify      = glfwGetWindowAttrib (impl, GLFW_AUTO_ICONIFY     ) == GLFW_TRUE;
+  resizable        = glfwGetWindowAttrib (impl, GLFW_RESIZABLE        ) == GLFW_TRUE;
+  decorated        = glfwGetWindowAttrib (impl, GLFW_DECORATED        ) == GLFW_TRUE;
+  floating         = glfwGetWindowAttrib (impl, GLFW_FLOATING         ) == GLFW_TRUE;
+  maximized        = glfwGetWindowAttrib (impl, GLFW_MAXIMIZED        ) == GLFW_TRUE;
+  focusOnShow      = glfwGetWindowAttrib (impl, GLFW_FOCUS_ON_SHOW    ) == GLFW_TRUE;
+  mousePassthrough = glfwGetWindowAttrib (impl, GLFW_MOUSE_PASSTHROUGH) == GLFW_TRUE;
+  hovered          = glfwGetWindowAttrib (impl, GLFW_HOVERED          ) == GLFW_TRUE;
+  doublebuffer           = glfwGetWindowAttrib (impl, GLFW_DOUBLEBUFFER) == GLFW_TRUE;
+  transparentFrameBuffer = glfwGetWindowAttrib (impl, GLFW_TRANSPARENT_FRAMEBUFFER) == GLFW_TRUE;
+
+  profile                = hints.profile;
+  contextVersionMajor    = hints.contextVersionMajor;
+  contextVersionMinor    = hints.contextVersionMinor;
+  //resizable              = hints.resizable;
+  //visible                = hints.visible;
+  //decorated              = hints.decorated;
+  //focused                = hints.focused;
+  //autoIconify            = hints.autoIconify;
+  //floating               = hints.floating;
+  //maximized              = hints.maximized;
+  //focusOnShow            = hints.focusOnShow;
+  //mousePassthrough       = hints.mousePassthrough;
+  //doublebuffer           = hints.doublebuffer;
+  //transparentFrameBuffer = hints.transparentFrameBuffer;
 }
 }
 
@@ -214,26 +285,43 @@ namespace GL
 {
 Window::Window (const Geom::Vec2I &size, const char *title, const WindowHints &hints, Window *parent) noexcept
 {
-  mPimpl = createWindowImpl (this, size, title, nullptr, hints);
+  GLFWwindow *impl = createWindowImpl (this, size, title, nullptr, hints);
+  mPimpl = impl;
+  initWindowParams (impl, hints, mPos, mSize, mCursorPos, mFrameBufferSize, mContentScale,
+                    mProfile, mContextVersionMajor, mContextVersionMinor,
+                    mResizable, mVisible, mDecorated, mFocused, mIconified, mAutoIconify,
+                    mFloating, mMaximized, mFocusOnShow, mMousePassthrough,
+                    mDoublebuffer, mTransparentFrameBuffer, mHovered, mOpacity);
   setParent (parent);
 }
 
 Window::Window (const Geom::Vec2I &resolution, const char *title, const Monitor &monitor, const WindowHints &hints, Window *parent) noexcept
 {
-  mPimpl = createWindowImpl (this, resolution, title, static_cast<GLFWmonitor*> (monitor.mPimpl), hints);
+  GLFWwindow *impl = createWindowImpl (this, resolution, title, static_cast<GLFWmonitor*> (monitor.mPimpl), hints);
+  mPimpl = impl;
+  initWindowParams (impl, hints, mPos, mSize, mCursorPos, mFrameBufferSize, mContentScale,
+                    mProfile, mContextVersionMajor, mContextVersionMinor,
+                    mResizable, mVisible, mDecorated, mFocused, mIconified, mAutoIconify,
+                    mFloating, mMaximized, mFocusOnShow, mMousePassthrough,
+                    mDoublebuffer, mTransparentFrameBuffer, mHovered, mOpacity);
   setParent (parent);
 }
 
 Window::Window (const char *title, const Monitor &monitor, const GL::VideoMode &videoMode, Window *parent) noexcept
 {
-  mPimpl = createWindowImpl (this, title, static_cast<GLFWmonitor*> (monitor.mPimpl), videoMode);
+  GL::WindowHints hints = videoModeHints (videoMode);
+  GLFWwindow *impl = createWindowImpl (this, {videoMode.width (), videoMode.height ()}, title, static_cast<GLFWmonitor*> (monitor.mPimpl), hints);
+  mPimpl = impl;
+  initWindowParams (impl, hints, mPos, mSize, mCursorPos, mFrameBufferSize, mContentScale,
+                    mProfile, mContextVersionMajor, mContextVersionMinor,
+                    mResizable, mVisible, mDecorated, mFocused, mIconified, mAutoIconify,
+                    mFloating, mMaximized, mFocusOnShow, mMousePassthrough,
+                    mDoublebuffer, mTransparentFrameBuffer, mHovered, mOpacity);
   setParent (parent);
 }
 
-Window::Window (const char *title, const Monitor &monitor, Window *parent) noexcept
+Window::Window (const char *title, const Monitor &monitor, Window *parent) noexcept: Window (title, monitor, monitor.videoMode (), parent)
 {
-  mPimpl = createWindowImpl (this, title, static_cast<GLFWmonitor *> (monitor.mPimpl), monitor.videoMode ());
-  setParent (parent);
 }
 
 Window::~Window () noexcept
@@ -368,9 +456,7 @@ void Window::setTitle (const char *title)
 
 Geom::Vec2I Window::pos () const
 {
-  Geom::Vec2I pos;
-  glfwGetWindowPos (toGLFWwindow (mPimpl), &pos[0], &pos[1]);
-  return pos;
+  return mPos;
 }
 
 void Window::setPos (const Geom::Vec2I &pos)
@@ -380,9 +466,7 @@ void Window::setPos (const Geom::Vec2I &pos)
 
 Geom::Vec2I Window::size () const
 {
-  Geom::Vec2I size;
-  glfwGetWindowSize (toGLFWwindow (mPimpl), &size[0], &size[1]);
-  return size;
+  return mSize;
 }
 
 void Window::setSize (const Geom::Vec2I &size)
@@ -448,9 +532,7 @@ void Window::setAspectRatio (const std::optional<Geom::Vec2I> &ratio)
 
 Geom::Vec2I Window::frameBufferSize () const
 {
-  Geom::Vec2I size;
-  glfwGetFramebufferSize (toGLFWwindow (mPimpl), &size[0], &size[1]);
-  return size;
+  return mFrameBufferSize;
 }
 
 Geom::RectI Window::frameRect () const
@@ -465,24 +547,23 @@ Geom::RectI Window::frameRect () const
 
 Geom::Vec2F Window::contentScale () const
 {
-  Geom::Vec2F scale;
-  glfwGetWindowContentScale (toGLFWwindow (mPimpl), &scale[0], &scale[1]);
-  return scale;
+  return mContentScale;
 }
 
 float Window::opacity () const
 {
-  return glfwGetWindowOpacity (toGLFWwindow (mPimpl));
+  return mOpacity;
 }
 
 void Window::setOpacity (float opacity)
 {
+  mOpacity = opacity;
   glfwSetWindowOpacity (toGLFWwindow (mPimpl), opacity);
 }
 
 bool Window::isIconified () const
 {
-  return glfwGetWindowAttrib (toGLFWwindow (mPimpl), GLFW_ICONIFIED) == GLFW_TRUE;
+  return mIconified;
 }
 
 void Window::iconify ()
@@ -492,7 +573,7 @@ void Window::iconify ()
 
 bool Window::isMaximized () const
 {
-  return glfwGetWindowAttrib (toGLFWwindow (mPimpl), GLFW_MAXIMIZED) == GLFW_TRUE;
+  return mMaximized;
 }
 
 void Window::maximize ()
@@ -507,7 +588,7 @@ void Window::restore ()
 
 bool Window::isVisible () const
 {
-  return glfwGetWindowAttrib (toGLFWwindow (mPimpl), GLFW_VISIBLE) == GLFW_TRUE;
+  return mVisible;
 }
 
 void Window::setVislble (bool visible)
@@ -535,7 +616,7 @@ void Window::requestAttention ()
 
 bool Window::isFocused () const
 {
-  return glfwGetWindowAttrib (toGLFWwindow (mPimpl), GLFW_FOCUSED) == GLFW_TRUE;
+  return mFocused;
 }
 
 void Window::focus ()
@@ -545,7 +626,7 @@ void Window::focus ()
 
 bool Window::isAutoIconified () const
 {
-  return glfwGetWindowAttrib (toGLFWwindow (mPimpl), GLFW_AUTO_ICONIFY) == GLFW_TRUE;
+  return mIconified;
 }
 
 void Window::setAutoIconified (bool autoIconified)
@@ -555,7 +636,7 @@ void Window::setAutoIconified (bool autoIconified)
 
 bool Window::isResizable () const
 {
-  return glfwGetWindowAttrib (toGLFWwindow (mPimpl), GLFW_RESIZABLE) == GLFW_TRUE;
+  return mResizable;
 }
 
 void Window::setResizable (bool resizable)
@@ -565,7 +646,7 @@ void Window::setResizable (bool resizable)
 
 bool Window::isDecorated () const
 {
-  return glfwGetWindowAttrib (toGLFWwindow (mPimpl), GLFW_DECORATED) == GLFW_TRUE;
+  return mDecorated;
 }
 
 void Window::setDecorated (bool decorated)
@@ -575,7 +656,7 @@ void Window::setDecorated (bool decorated)
 
 bool Window::isFloating () const
 {
-  return glfwGetWindowAttrib (toGLFWwindow (mPimpl), GLFW_FLOATING) == GLFW_TRUE;
+  return mFloating;
 }
 
 void Window::setFloating (bool floating)
@@ -585,7 +666,7 @@ void Window::setFloating (bool floating)
 
 bool Window::isFocusedOnShow () const
 {
-  return glfwGetWindowAttrib (toGLFWwindow (mPimpl), GLFW_FOCUS_ON_SHOW) == GLFW_TRUE;
+  return mFocusOnShow;
 }
 
 void Window::setFocusedOnShow (bool focusedOnShow)
@@ -595,7 +676,7 @@ void Window::setFocusedOnShow (bool focusedOnShow)
 
 bool Window::isMousePassthrough () const
 {
-  return glfwGetWindowAttrib (toGLFWwindow (mPimpl), GLFW_MOUSE_PASSTHROUGH) == GLFW_TRUE;
+  return mMousePassthrough;
 }
 
 void Window::setMousePassthrough (bool mousePassthrough)
@@ -605,17 +686,17 @@ void Window::setMousePassthrough (bool mousePassthrough)
 
 bool Window::isHovered () const
 {
-  return glfwGetWindowAttrib (toGLFWwindow (mPimpl), GLFW_HOVERED) == GLFW_TRUE;
+  return mHovered;
 }
 
 bool Window::hasTransparentFramebuffer () const
 {
-  return glfwGetWindowAttrib (toGLFWwindow (mPimpl), GLFW_TRANSPARENT_FRAMEBUFFER) == GLFW_TRUE;
+  return mTransparentFrameBuffer;
 }
 
 bool Window::hasDoubleBuffer () const
 {
-  return glfwGetWindowAttrib (toGLFWwindow (mPimpl), GLFW_DOUBLEBUFFER) == GLFW_TRUE;
+  return mDoublebuffer;
 }
 
 Window::CursorInputMode Window::cursorInputMode () const
@@ -673,16 +754,9 @@ bool Window::rawMouseMotionSupported () const
   return glfwRawMouseMotionSupported () == GLFW_TRUE;
 }
 
-MouseButtonAction Window::lastMouseButtonAction (MouseButton button) const
-{
-  return static_cast<MouseButtonAction> (glfwGetMouseButton (toGLFWwindow (mPimpl), static_cast<int> (button)));
-}
-
 Geom::Vec2D Window::cursorPos () const
 {
-  Geom::Vec2D pos;
-  glfwGetCursorPos (toGLFWwindow (mPimpl), &pos[0], &pos[1]);
-  return pos;
+  return mCursorPos;
 }
 
 void Window::setCursorPos (const Geom::Vec2D &pos)

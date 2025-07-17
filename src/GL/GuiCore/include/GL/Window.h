@@ -19,15 +19,15 @@ class VideoMode;
 class Application;
 class WindowEventDispatcher;
 
+enum class Profile
+{
+  Any = 0,            /* GLFW_OPENGL_ANY_PROFILE    */
+  Core = 0x00032001,  /* GLFW_OPENGL_CORE_PROFILE   */
+  Compat = 0x00032002 /* GLFW_OPENGL_COMPAT_PROFILE */
+};
+
 struct WindowHints
 {
-  enum class Profile
-  {
-    Any = 0,            /* GLFW_OPENGL_ANY_PROFILE    */
-    Core = 0x00032001,  /* GLFW_OPENGL_CORE_PROFILE   */
-    Compat = 0x00032002 /* GLFW_OPENGL_COMPAT_PROFILE */
-  };
-
   Profile profile = Profile::Core; /* GLFW_OPENGL_PROFILE        */
   int contextVersionMajor = 3;     /* GLFW_CONTEXT_VERSION_MAJOR */
   int contextVersionMinor = 3;     /* GLFW_CONTEXT_VERSION_MINOR */
@@ -70,7 +70,7 @@ public:
   };
 
   Window (const Geom::Vec2I &size, const char *title, const WindowHints &hints = {}, Window *parent = nullptr) noexcept;
-  Window (const Geom::Vec2I &resolution, const char *title, const Monitor &monitor,  const WindowHints &hints = {}, Window *parent = nullptr) noexcept;
+  Window (const Geom::Vec2I &resolution, const char *title, const Monitor &monitor, const WindowHints &hints = {}, Window *parent = nullptr) noexcept;
   Window (const char *title, const Monitor &monitor, const GL::VideoMode &videoMode, Window *parent = nullptr) noexcept;
   Window (const char *title, const Monitor &monitor, Window *parent = nullptr) noexcept;
 
@@ -191,8 +191,6 @@ public:
   void setRawMouseMotionEnabled (bool enabled);
   bool rawMouseMotionSupported () const;
 
-  GL::MouseButtonAction lastMouseButtonAction (GL::MouseButton button) const;
-
   Geom::Vec2D cursorPos () const;
   void setCursorPos (const Geom::Vec2D &pos);
 
@@ -200,7 +198,7 @@ public:
   /// Events
   Common::Signal<> closeEvent;
   Common::Signal<Geom::Vec2I> framebufferResizeEvent;
-  Common::Signal<float, float> scaleEvent;
+  Common::Signal<Geom::Vec2F> scaleEvent;
   Common::Signal<bool> iconifyEvent;
   Common::Signal<bool> maximizeEvent;
   Common::Signal<bool> focusEvent;
@@ -220,11 +218,33 @@ private:
   friend class GL::Application;
   friend class GL::WindowEventDispatcher;
 
+  void *mPimpl = nullptr;
+
+  Geom::Vec2I mPos;
+  Geom::Vec2I mSize;
+  Geom::Vec2I mFrameBufferSize;
+  Geom::Vec2F mContentScale;
+  Geom::Vec2D mCursorPos;
+  Profile mProfile;
+  int mContextVersionMajor;
+  int mContextVersionMinor;
+  bool mResizable;
+  bool mVisible;
+  bool mDecorated;
+  bool mFocused;
+  bool mHovered;
+  bool mIconified;
+  bool mAutoIconify;
+  bool mFloating;
+  bool mMaximized;
+  bool mFocusOnShow;
+  bool mMousePassthrough;
+  bool mDoublebuffer;
+  bool mTransparentFrameBuffer;
   std::optional<Geom::Vec2I> mMinSize;
   std::optional<Geom::Vec2I> mMaxSize;
   std::optional<Geom::Vec2I> mAspectRatio;
-
-  void *mPimpl = nullptr;
+  float mOpacity;
 
   bool mUpdateNeeded = true;
 
