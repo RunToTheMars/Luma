@@ -57,32 +57,18 @@ private:
         if (mWindow.isWindowed ())
           {
             if (!mWindow.isMaximized ())
-              {
-                mPosBeforeFullScreen = mWindow.pos ();
-                mSizeBeforeFullScreen = mWindow.size ();
-                mWindow.setDecorated (false);
-                mWindow.maximize ();
-                // window.setMonitor (GL::Application::primaryMonitor ());
-              }
+              mWindow.maximize ();
             else
-              {
-                mWindow.setDecorated (true);
-                mWindow.setPos (mPosBeforeFullScreen);
-                mWindow.setSize (mSizeBeforeFullScreen);
-              }
+              mWindow.restore ();
           }
       }
 
     if (event.key () == GL::Key::Key_F11 && event.action () == GL::KeyAction::Press)
       {
         if (mWindow.isWindowed ())
-          {
-            mPosBeforeFullScreen = mWindow.pos ();
-            mSizeBeforeFullScreen = mWindow.size ();
-            mWindow.setMonitor (GL::Application::primaryMonitor ());
-          }
+          mWindow.setMonitor (GL::Application::primaryMonitor ());
         else
-          mWindow.setWindowed (mPosBeforeFullScreen, mSizeBeforeFullScreen);
+          mWindow.setWindowed (Geom::Vec2I {0, 0}, Geom::Vec2I {800, 600});
       }
 
 
@@ -245,9 +231,6 @@ private:
 private:
   GL::Window mWindow;
   Common::Slots mSlots;
-
-  Geom::Vec2I mPosBeforeFullScreen;
-  Geom::Vec2I mSizeBeforeFullScreen = {800, 600};
 
   Geom::Vec4F mColor = {0.5f, 0.5f, 0.0f, 1.0f};
 
