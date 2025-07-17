@@ -146,7 +146,6 @@ private:
           glColor3f(0.0f, 0.0f, 1.0f);
           glVertex2f(glPos[0], glPos[1]);
         glEnd();
-        glFlush();
       }
 
     if (!mIsInited)
