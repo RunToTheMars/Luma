@@ -310,7 +310,7 @@ Window::Window (const Geom::Vec2I &resolution, const char *title, const Monitor 
 Window::Window (const char *title, const Monitor &monitor, const GL::VideoMode &videoMode, Window *parent) noexcept
 {
   GL::WindowHints hints = videoModeHints (videoMode);
-  GLFWwindow *impl = createWindowImpl (this, {videoMode.width (), videoMode.height ()}, title, static_cast<GLFWmonitor*> (monitor.mPimpl), hints);
+  GLFWwindow *impl = createWindowImpl (this, videoMode.size (), title, static_cast<GLFWmonitor*> (monitor.mPimpl), hints);
   mPimpl = impl;
   initWindowParams (impl, hints, mPos, mSize, mCursorPos, mFrameBufferSize, mContentScale,
                     mProfile, mContextVersionMajor, mContextVersionMinor,

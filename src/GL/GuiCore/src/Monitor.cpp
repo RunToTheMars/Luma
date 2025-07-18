@@ -98,6 +98,11 @@ int VideoMode::height () const
   return static_cast<const GLFWvidmode *> (mPimpl)->height;
 }
 
+Geom::Vec2I VideoMode::size () const
+{
+  return {width (), height ()};
+}
+
 int VideoMode::redBits () const
 {
   return static_cast<const GLFWvidmode *> (mPimpl)->redBits;

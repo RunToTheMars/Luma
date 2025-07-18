@@ -71,6 +71,7 @@ public:
 
   int width () const;
   int height () const;
+  Geom::Vec2I size () const;
 
   int redBits () const;
   int greenBits () const;
