@@ -1,6 +1,7 @@
-#include "Common/Signal.h"
 #include "GL/Application.h"
+#include "GL/KeyEvent.h"
 #include "GL/Monitor.h"
+#include "GL/MoveEvent.h"
 #include "GL/Window.h"
 #include <GL/glew.h>
 #include <memory>
@@ -8,7 +9,7 @@
 GL::WindowHints createHints (bool isModal)
 {
   GL::WindowHints hints;
-  hints.profile = GL::WindowHints::Profile::Compat;
+  hints.profile = GL::Profile::Compat;
   hints.contextVersionMajor = 3;
   hints.contextVersionMinor = 3;
   hints.floating = isModal;
@@ -16,106 +17,67 @@ GL::WindowHints createHints (bool isModal)
 }
 
 
-class CustomWindow
+class CustomWindow: public GL::Window
 {
 public:
   CustomWindow (bool isModal, GL::Window *parent):
-  mWindow ({800, 600}, isModal ? "Hello Window Events (Modal)" : "Hello Window Events", createHints (isModal), parent)
+  GL::Window ({800, 600}, isModal ? "Hello Window Events (Modal)" : "Hello Window Events", createHints (isModal), parent)
   {
-    #define BIND_THIS(method) [this] (auto &&...args) { this->method (std::forward<decltype (args)> (args)...); }
-
-    mSlots.connect (mWindow.moveEvent  , BIND_THIS (moveEventHandle));
-    mSlots.connect (mWindow.keyEvent   , BIND_THIS (keyEventHandle));
-    mSlots.connect (mWindow.renderEvent, BIND_THIS (renderEventHandle));
-    mSlots.connect (mWindow.hoverEvent , BIND_THIS (hoverEventHandle));
-    mSlots.connect (mWindow.leaveEvent , BIND_THIS (leaveEventHandle));
-    mSlots.connect (mWindow.closeEvent , BIND_THIS (closeEventHandle));
-
     if (isModal)
-      mWindow.setModality (GL::Window::Modality::ApplicationModal);
-
-    #undef BIND_THIS
+      setModality (GL::Window::Modality::ApplicationModal);
   }
 
 private:
-  void moveEventHandle (const Geom::Vec2I &pos)
-  {
-    mColor[0] = pos[0] / 3000.f;
-    mColor[1] = pos[1] / 2000.f;
-  }
-
-  void keyEventHandle (const GL::KeyEvent &event)
+  void keyEvent (const GL::KeyEvent &event) override
   {
     if (event.key () == GL::Key::Key_Escape && event.action () == GL::KeyAction::Press)
-      return mWindow.destroy ();
+      return destroy ();
 
     if (event.key () == GL::Key::Key_F10 && event.action () == GL::KeyAction::Press)
       {
-        if (mWindow.isWindowed ())
+        if (isWindowed ())
           {
-            if (!mWindow.isMaximized ())
-              {
-                mPosBeforeFullScreen = mWindow.pos ();
-                mSizeBeforeFullScreen = mWindow.size ();
-                mWindow.setDecorated (false);
-                mWindow.maximize ();
-                // window.setMonitor (GL::Application::primaryMonitor ());
-              }
+            if (!isMaximized ())
+              maximize ();
             else
-              {
-                mWindow.setDecorated (true);
-                mWindow.setPos (mPosBeforeFullScreen);
-                mWindow.setSize (mSizeBeforeFullScreen);
-              }
+              restore ();
           }
       }
 
     if (event.key () == GL::Key::Key_F11 && event.action () == GL::KeyAction::Press)
       {
-        if (mWindow.isWindowed ())
-          {
-            mPosBeforeFullScreen = mWindow.pos ();
-            mSizeBeforeFullScreen = mWindow.size ();
-            mWindow.setMonitor (GL::Application::primaryMonitor ());
-          }
+        if (isWindowed ())
+          setMonitor (GL::Application::primaryMonitor ());
         else
-          mWindow.setWindowed (mPosBeforeFullScreen, mSizeBeforeFullScreen);
+          setWindowed ({0, 0}, {800, 600});
       }
 
 
     if (event.key () == GL::Key::Key_F5 && event.action () == GL::KeyAction::Press)
       {
-        mWindow.update ();
+        update ();
       }
 
     if (event.key () == GL::Key::Key_I && event.action () == GL::KeyAction::Press)
       {
-        if (!mWindow.isIconified ())
-          {
-            mWindow.iconify ();
-          }
+        if (!isIconified ())
+          iconify ();
         else
-          {
-            mWindow.restore ();
-          }
+          restore ();
       }
 
     if (event.key () == GL::Key::Key_M && event.action () == GL::KeyAction::Press)
       {
-        if (!mWindow.isMaximized ())
-          {
-            mWindow.maximize ();
-          }
+        if (!isMaximized ())
+          maximize ();
         else
-          {
-            mWindow.restore ();
-          }
+          restore ();
       }
 
 
     if (event.key () == GL::Key::Key_A && event.action () == GL::KeyAction::Press)
       {
-        mWindow.requestAttention ();
+        requestAttention ();
       }
 
     if (event.key () == GL::Key::Key_W && event.action () == GL::KeyAction::Press)
@@ -123,7 +85,7 @@ private:
         if (mSubWindow)
           mSubWindow.reset ();
         else
-          mSubWindow = std::make_unique<CustomWindow> (false, &mWindow);
+          mSubWindow = std::make_unique<CustomWindow> (false, this);
       }
 
     if (event.key () == GL::Key::Key_G && event.action () == GL::KeyAction::Press)
@@ -131,67 +93,46 @@ private:
         if (mSubWindow)
           mSubWindow.reset ();
         else
-          mSubWindow = std::make_unique<CustomWindow> (true, &mWindow);
+          mSubWindow = std::make_unique<CustomWindow> (true, this);
       }
   }
 
-  void renderEventHandle ()
+  void renderEvent (const GL::RenderEvent &/*event*/) override
   {
-    Geom::Vec2I frameBufferSize = mWindow.frameBufferSize ();
+    Geom::Vec2I frameBufferSize = GL::Window::frameBufferSize ();
+    Geom::Vec4F color = {GL::Window::pos ()[0] / 1000.f, 1.f, 1.f, 1.f};
 
-    glClearColor (mColor[0], mColor[1], mColor[2], mColor[3]);
+    glClearColor (color[0], color[1], color[2], color[3]);
     glClear (GL_COLOR_BUFFER_BIT);
     glViewport (0, 0, frameBufferSize[0], frameBufferSize[1]);
 
-    if (mHoverPos.has_value ())
+    if (GL::Window::isHovered ())
       {
         Geom::Vec2F glPos;
-        glPos[0] = 2. * mHoverPos->at (0) / frameBufferSize[0] - 1.f;
-        glPos[1] = 1.f - 2. * mHoverPos->at (1) / frameBufferSize[1];
+        Geom::Vec2D cursorPos = GL::Window::cursorPos ();
+        glPos[0] = 2. * cursorPos[0] / frameBufferSize[0] - 1.f;
+        glPos[1] = 1.f - 2. * cursorPos[1] / frameBufferSize[1];
 
         glPointSize(8.0f);
         glBegin(GL_POINTS);
           glColor3f(0.0f, 0.0f, 1.0f);
           glVertex2f(glPos[0], glPos[1]);
         glEnd();
-        glFlush();
       }
   }
 
-  void hoverEventHandle (const Geom::Vec2D &pos)
+  void hoverEvent (const GL::HoverEvent &/*event*/) override
   {
-    if (mHoverPos == pos)
-      return;
-
-    mHoverPos = pos;
-    mWindow.update ();
+    update ();
   }
 
-  void leaveEventHandle ()
+  void leaveEvent () override
   {
-    if (mHoverPos)
-      {
-        mHoverPos = std::nullopt;
-        mWindow.update ();
-      }
-  }
-
-  void closeEventHandle ()
-  {
-    mWindow.destroy ();
+    update ();
   }
 
 private:
-  GL::Window mWindow;
-  Common::Slots mSlots;
-
-  Geom::Vec2I mPosBeforeFullScreen;
-  Geom::Vec2I mSizeBeforeFullScreen = {800, 600};
-
-  Geom::Vec4F mColor = {0.5f, 0.5f, 0.0f, 1.0f};
-
   std::unique_ptr<CustomWindow> mSubWindow;
-  std::optional<Geom::Vec2D> mHoverPos;
 };
 
 int main ()

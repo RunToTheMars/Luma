@@ -1,8 +1,15 @@
 #include "GL/Window.h"
-#include "Gl/Monitor.h"
 #include "ApplicationPrivate.h"
-#include <GLFW/glfw3.h>
+#include "GL/Application.h"
+#include "GL/HoverEvent.h"
+#include "GL/KeyEvent.h"
+#include "GL/MouseEvent.h"
+#include "GL/MoveEvent.h"
+#include "GL/RenderEvent.h"
+#include "GL/ResizeEvent.h"
+#include "Gl/Monitor.h"
 #include "ImplCast.inl"
+#include <GLFW/glfw3.h>
 
 namespace GL
 {
@@ -35,20 +42,20 @@ public:
   {
     GL::Window *GLwindow = toGLwindow (glfwGetWindowUserPointer (window));
     GLwindow->mPos = {xpos, ypos};
-    GLwindow->moveEvent.notify (GLwindow->mPos);
+    GLwindow->moveEvent (GLwindow->mPos);
   }
 
   static void WindowSizeChangedHandle (GLFWwindow *window, int width, int height)
   {
     GL::Window *GLwindow = toGLwindow (glfwGetWindowUserPointer (window));
     GLwindow->mSize = {width, height};
-    GLwindow->resizeEvent.notify (GLwindow->mSize);
+    GLwindow->resizeEvent (GLwindow->mSize);
   }
 
   static void WindowClosedHandle (GLFWwindow *window)
   {
     GL::Window *GLwindow = toGLwindow (glfwGetWindowUserPointer (window));
-    notifyInputEvent (GLwindow, [&] { GLwindow->closeEvent.notify (); }, &requestAttentionToModal);
+    notifyInputEvent (GLwindow, [&] { GLwindow->closeEvent (); }, &requestAttentionToModal);
   }
 
   static void WindowRefreshHandle (GLFWwindow *window)
@@ -62,53 +69,54 @@ public:
     GL::Window *GLwindow = toGLwindow (glfwGetWindowUserPointer (window));
     GLwindow->mFocused = focused == GLFW_TRUE;
     if (GLwindow->mFocused)
-      GL::ApplicationPrivate::focusWindow = GLwindow;
-    else if (GL::ApplicationPrivate::focusWindow == GLwindow)
-      GL::ApplicationPrivate::focusWindow = nullptr;
+      {
+        GL::ApplicationPrivate::focusWindow = GLwindow;
+        GLwindow->focusInEvent ();
+      }
+    else
+      {
+        if (GL::ApplicationPrivate::focusWindow == GLwindow)
+          GL::ApplicationPrivate::focusWindow = nullptr;
 
-    GLwindow->focusEvent.notify (GLwindow->mFocused);
+        GLwindow->focusOutEvent ();
+      }
   }
 
   static void WindowIconifiedHandle (GLFWwindow *window, int iconified)
   {
     GL::Window *GLwindow = toGLwindow (glfwGetWindowUserPointer (window));
     GLwindow->mIconified = iconified == GLFW_TRUE;
-    GLwindow->iconifyEvent.notify (GLwindow->mIconified);
   }
 
   static void WindowMaximizedHandle (GLFWwindow *window, int maximized)
   {
     GL::Window *GLwindow = toGLwindow (glfwGetWindowUserPointer (window));
     GLwindow->mMaximized = maximized == GLFW_TRUE;
-    GLwindow->maximizeEvent.notify (GLwindow->mMaximized);
   }
 
   static void WindowFramebufferSizeChangedHandle (GLFWwindow *window, int width, int height)
   {
     GL::Window *GLwindow = toGLwindow (glfwGetWindowUserPointer (window));
     GLwindow->mFrameBufferSize = {width, height};
-    GLwindow->framebufferResizeEvent.notify (GLwindow->mFrameBufferSize);
   }
 
   static void WindowContentScaleChangedHandle (GLFWwindow *window, float xscale, float yscale)
   {
     GL::Window *GLwindow = toGLwindow (glfwGetWindowUserPointer (window));
     GLwindow->mContentScale = {xscale, yscale};
-    GLwindow->scaleEvent.notify (GLwindow->mContentScale);
   }
 
   static void WindowKeyEventHandle (GLFWwindow *window, int key, int scancode, int action, int mods)
   {
     GL::Window *GLwindow = toGLwindow (glfwGetWindowUserPointer (window));
-    notifyInputEvent (GLwindow, [&] { GLwindow->keyEvent.notify (GL::KeyEvent (static_cast<GL::Key> (key), static_cast<GL::KeyAction> (action))); });
+    notifyInputEvent (GLwindow, [&] { GLwindow->keyEvent (GL::KeyEvent (static_cast<GL::Key> (key), static_cast<GL::KeyAction> (action))); });
   }
 
   static void WindowMouseButtonEventHandle (GLFWwindow *window, int button, int action, int mods)
   {
     GL::Window *GLwindow = toGLwindow (glfwGetWindowUserPointer (window));
-
     notifyInputEvent (GLwindow, [&] {
-      GLwindow->mouseButtonEvent.notify (GL::MouseButtonEvent (static_cast<GL::MouseButton> (button), static_cast<GL::MouseButtonAction> (action)));
+      GLwindow->mouseEvent (GL::MouseEvent (static_cast<GL::MouseButton> (button), static_cast<GL::MouseButtonAction> (action)));
     });
   }
 
@@ -117,7 +125,7 @@ public:
     GL::Window *GLwindow = toGLwindow (glfwGetWindowUserPointer (window));
     notifyInputEvent (GLwindow, [&] {
       GLwindow->mCursorPos = {xpos, ypos};
-      GLwindow->hoverEvent.notify (GLwindow->mCursorPos);
+      GLwindow->hoverEvent (GLwindow->mCursorPos);
     });
   }
 
@@ -127,16 +135,10 @@ public:
     notifyInputEvent (GLwindow, [&] {
       GLwindow->mHovered = entered == GLFW_TRUE;
       if (GLwindow->mHovered)
-        GLwindow->enterEvent.notify ();
+        GLwindow->enterEvent ();
       else
-        GLwindow->leaveEvent.notify ();
+        GLwindow->leaveEvent ();
     });
-  }
-
-  static void WindowScrollEventHandle (GLFWwindow *window, double xoffset, double yoffset)
-  {
-    GL::Window *GLwindow = toGLwindow (glfwGetWindowUserPointer (window));
-    notifyInputEvent (GLwindow, [&] { GLwindow->scrollEvent.notify (Geom::Vec2D {xoffset, yoffset}); });
   }
 };
 }  // namespace GL
@@ -199,7 +201,6 @@ GLFWwindow *createWindowImpl (GL::Window *window, const Geom::Vec2I &size, const
   glfwSetMouseButtonCallback        (impl, &GL::WindowEventDispatcher::WindowMouseButtonEventHandle);
   glfwSetCursorPosCallback          (impl, &GL::WindowEventDispatcher::WindowCursorPosChangedHandle);
   glfwSetCursorEnterCallback        (impl, &GL::WindowEventDispatcher::WindowCursorEnterChangedHandle);
-  glfwSetScrollCallback             (impl, &GL::WindowEventDispatcher::WindowScrollEventHandle);
 
   glfwMakeContextCurrent (impl);
   glfwSwapInterval (0);
@@ -324,6 +325,10 @@ Window::Window (const char *title, const Monitor &monitor, Window *parent) noexc
 {
 }
 
+Window::Window (const char *title, Window *parent) noexcept: Window (title, GL::Application::primaryMonitor (), parent)
+{
+}
+
 Window::~Window () noexcept
 {
   destroy ();
@@ -358,7 +363,7 @@ void Window::repaint ()
 {
   GLFWwindow *impl = toGLFWwindow (mPimpl);
   glfwMakeContextCurrent (impl);
-  renderEvent.notify ();
+  renderEvent (GL::RenderEvent (Geom::RectI { {0, 0}, mSize }));
   glfwSwapBuffers (impl);
 }
 
@@ -763,4 +768,50 @@ void Window::setCursorPos (const Geom::Vec2D &pos)
 {
   glfwSetCursorPos (toGLFWwindow (mPimpl), pos[0], pos[1]);
 }
+
+void Window::closeEvent ()
+{
+  destroy ();
+}
+
+void Window::focusInEvent ()
+{
+}
+
+void Window::focusOutEvent ()
+{
+}
+
+void Window::renderEvent (const GL::RenderEvent &)
+{
+}
+
+void Window::hoverEvent (const GL::HoverEvent &)
+{
+}
+
+void Window::moveEvent (const GL::MoveEvent &)
+{
+}
+
+void Window::resizeEvent (const GL::ResizeEvent &)
+{
+}
+
+void Window::keyEvent (const GL::KeyEvent &)
+{
+}
+
+void Window::mouseEvent (const GL::MouseEvent &)
+{
+}
+
+void Window::enterEvent ()
+{
+}
+
+void Window::leaveEvent ()
+{
+}
+
 }

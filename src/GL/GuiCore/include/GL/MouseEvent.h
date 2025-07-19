@@ -22,11 +22,11 @@ enum class MouseButtonAction {
   Release = 0, /* GLFW_RELEASE */
 };
 
-class MouseButtonEvent
+class MouseEvent
 {
 public:
-  MouseButtonEvent (GL::MouseButton button, GL::MouseButtonAction action) : mButton (button), mAction (action) {}
-  ~MouseButtonEvent () = default;
+  MouseEvent (GL::MouseButton button, GL::MouseButtonAction action) : mButton (button), mAction (action) {}
+  ~MouseEvent () = default;
 
   const GL::MouseButton button () const { return mButton; }
   const GL::MouseButtonAction action () const { return mAction; }

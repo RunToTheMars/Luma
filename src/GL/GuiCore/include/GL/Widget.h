@@ -8,8 +8,7 @@
 // namespace GL
 // {
 // class KeyEvent;
-// // class MouseEvent;
-// class WindowCreateConfig;
+// class MouseEvent;
 
 // class Widget
 // {
@@ -26,34 +25,26 @@
 //   bool isVisible () const;
 //   void setVisible (bool visible);
 
-//   Geometry::Rect rect () const;
-//   void setRect (const Geometry::Rect &rect);
+//   Geom::RectI rect () const;
+//   void setRect (const Geom::RectI &rect);
 
 //   void addWidget (std::unique_ptr<Widget> widget);
 //   bool hasWidget (const Widget *widget) const;
 //   std::unique_ptr<Widget> releaseWidget (const Widget *widget);
 
-// /// signals
 // public:
-//   Common::Signal<Geometry::Rect> rectChanged;
-
-// protected:
-//   virtual void keyEvent (const KeyEvent &event);
-//   // virtual bool mouseEvent (const MouseEvent &event);
 //   virtual void renderEvent ();
-
-// private:
-//   friend class WindowCreateConfig;
-//   friend class Window;
-//   void keyEventPrivate (const KeyEvent &event);
-//   // bool mouseEventPrivate (const MouseEvent &event);
-//   void renderEventPrivate ();
+//   virtual void enterEvent ();
+//   virtual void leaveEvent ();
+//   virtual void hoverEvent (const Geom::Vec2D &pos);
+//   virtual void keyEvent (const GL::KeyEvent &event);
+//   virtual void keyEvent (const GL::MouseEvent &event);
 
 // private:
 //   Widget *mParent = nullptr;
 //   bool mIsVisible = true;
 
-//   Geometry::Rect mRect;
+//   Geom::RectI mRect;
 //   std::vector<std::unique_ptr<Widget>> mChildrens;
 // };
 

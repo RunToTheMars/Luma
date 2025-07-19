@@ -1,19 +1,18 @@
 #pragma once
 
 #include "Common/Signal.h"
-#include "GL/KeyEvent.h"
-#include "GL/MouseButtonEvent.h"
 #include "Geometry/Rect.h"
 #include "Geometry/Vector.h"
 #include <optional>
 
-namespace Application
-{
-void exec ();
-}
-
 namespace GL
 {
+class KeyEvent;
+class HoverEvent;
+class MouseEvent;
+class ResizeEvent;
+class MoveEvent;
+class RenderEvent;
 class Monitor;
 class VideoMode;
 class Application;
@@ -73,8 +72,9 @@ public:
   Window (const Geom::Vec2I &resolution, const char *title, const Monitor &monitor, const WindowHints &hints = {}, Window *parent = nullptr) noexcept;
   Window (const char *title, const Monitor &monitor, const GL::VideoMode &videoMode, Window *parent = nullptr) noexcept;
   Window (const char *title, const Monitor &monitor, Window *parent = nullptr) noexcept;
+  Window (const char *title, Window *parent = nullptr) noexcept;
 
-  ~Window () noexcept;
+  virtual ~Window () noexcept;
 
   Window (const Window &) = delete;
   Window &operator= (const Window &) = delete;
@@ -195,24 +195,20 @@ public:
   void setCursorPos (const Geom::Vec2D &pos);
 
 public:
-  /// Events
-  Common::Signal<> closeEvent;
-  Common::Signal<Geom::Vec2I> framebufferResizeEvent;
-  Common::Signal<Geom::Vec2F> scaleEvent;
-  Common::Signal<bool> iconifyEvent;
-  Common::Signal<bool> maximizeEvent;
-  Common::Signal<bool> focusEvent;
-  Common::Signal<Geom::Vec2I> moveEvent;
-  Common::Signal<Geom::Vec2I> resizeEvent;
-  Common::Signal<GL::KeyEvent> keyEvent;
-  Common::Signal<GL::MouseButtonEvent> mouseButtonEvent;
-  Common::Signal<Geom::Vec2D> hoverEvent;
-  Common::Signal<> enterEvent;
-  Common::Signal<> leaveEvent;
-  Common::Signal<Geom::Vec2D> scrollEvent;
-  Common::Signal<> renderEvent;
-
   Common::Signal<> destroyed;
+
+  /// Events
+  virtual void closeEvent    ();
+  virtual void focusInEvent  ();
+  virtual void focusOutEvent ();
+  virtual void renderEvent   (const GL::RenderEvent &);
+  virtual void moveEvent     (const GL::MoveEvent &);
+  virtual void resizeEvent   (const GL::ResizeEvent &);
+  virtual void hoverEvent    (const GL::HoverEvent &);
+  virtual void keyEvent      (const GL::KeyEvent &);
+  virtual void mouseEvent    (const GL::MouseEvent &);
+  virtual void enterEvent    ();
+  virtual void leaveEvent    ();
 
 private:
   friend class GL::Application;
