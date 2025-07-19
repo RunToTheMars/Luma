@@ -28,6 +28,11 @@ public:
       setModality (GL::Window::Modality::ApplicationModal);
   }
 
+  ~CustomWindow ()
+  {
+    makeCurrent ();
+  }
+
 private:
   void keyEvent (const GL::KeyEvent &event) override
   {
@@ -92,22 +97,50 @@ private:
     if (event.key () == GL::Key::Key_W && event.action () == GL::KeyAction::Press)
       {
         if (mSubWindow)
-          mSubWindow.reset ();
+          {
+            delete mSubWindow;
+            mSubWindow = nullptr;
+          }
         else
-          mSubWindow = std::make_unique<CustomWindow> (false, this);
+          mSubWindow = new CustomWindow (false, this);
       }
 
     if (event.key () == GL::Key::Key_G && event.action () == GL::KeyAction::Press)
       {
         if (mSubWindow)
-          mSubWindow.reset ();
+          {
+            delete mSubWindow;
+            mSubWindow = nullptr;
+          }
         else
-          mSubWindow = std::make_unique<CustomWindow> (true, this);
+          mSubWindow = new CustomWindow (true, this);
       }
   }
 
   void renderEvent (const GL::RenderEvent &/*event*/) override
   {
+    if (!mIsInited)
+      {
+        glewInit ();
+
+        mIsInited = true;
+        mTextLineShader.init ();
+
+        mTextLineShader.bind ();
+        mTextLineShader.setPosition (-1.f, -1.f, 0.f);
+        mTextLineShader.setColor (0.f, 1.f, 0.f, 1.f);
+        mTextLineShader.setBackgroundColor (0.f, 0.f, 0.f, 0.f);
+        mTextLineShader.unbind ();
+
+        mTextVBO.create ();
+        mTextVBO.bind ();
+        mTextVBO.allocate (9);
+        mTextVBO.unbind ();
+
+        mStartTime = std::chrono::steady_clock::now ();
+        mFrames = 0;
+      }
+
     Geom::Vec2I frameBufferSize = GL::Window::frameBufferSize ();
     Geom::Vec4F color = {GL::Window::pos ()[0] / 1000.f, 0.f, 0.f, 1.f};
 
@@ -131,27 +164,6 @@ private:
         glColor3f (0.0f, 0.0f, 1.0f);
         glVertex2f (glPos[0], glPos[1]);
         glEnd ();
-      }
-
-    if (!mIsInited)
-      {
-        glewInit ();
-        mIsInited = true;
-        mTextLineShader.init ();
-
-        mTextLineShader.bind ();
-        mTextLineShader.setPosition (-1.f, -1.f, 0.f);
-        mTextLineShader.setColor (0.f, 1.f, 0.f, 1.f);
-        mTextLineShader.setBackgroundColor (0.f, 0.f, 0.f, 0.f);
-        mTextLineShader.unbind ();
-
-        mTextVBO.create ();
-        mTextVBO.bind ();
-        mTextVBO.allocate (9);
-        mTextVBO.unbind ();
-
-        mStartTime = std::chrono::steady_clock::now ();
-        mFrames = 0;
       }
 
     std::chrono::steady_clock::time_point curTime = std::chrono::steady_clock::now ();
@@ -200,7 +212,7 @@ private:
   }
 
 private:
-  std::unique_ptr<CustomWindow> mSubWindow;
+  CustomWindow *mSubWindow = nullptr;
 
   bool mIsInited = false;
 
@@ -214,6 +226,7 @@ private:
 int main ()
 {
   GL::Application app;
+
   CustomWindow window (false, nullptr);
 
   app.runEventLoop ();

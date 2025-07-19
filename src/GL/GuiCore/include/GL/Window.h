@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Common/Signal.h"
+#include "GL/Object.h"
 #include "Geometry/Rect.h"
 #include "Geometry/Vector.h"
 #include <optional>
@@ -58,7 +58,7 @@ struct WindowHints
   int stencilBits = 8;  /* GLFW_FOCUSED */
 };
 
-class Window
+class Window: public GL::Object
 {
 public:
   enum class Modality
@@ -68,22 +68,19 @@ public:
     ApplicationModal
   };
 
-  Window (const Geom::Vec2I &size, const char *title, const WindowHints &hints = {}, Window *parent = nullptr) noexcept;
-  Window (const Geom::Vec2I &resolution, const char *title, const Monitor &monitor, const WindowHints &hints = {}, Window *parent = nullptr) noexcept;
-  Window (const char *title, const Monitor &monitor, const GL::VideoMode &videoMode, Window *parent = nullptr) noexcept;
-  Window (const char *title, const Monitor &monitor, Window *parent = nullptr) noexcept;
-  Window (const char *title, Window *parent = nullptr) noexcept;
+  Window (const Geom::Vec2I &size, const char *title, const WindowHints &hints = {}, GL::Object *parent = nullptr) noexcept;
+  Window (const Geom::Vec2I &resolution, const char *title, const Monitor &monitor, const WindowHints &hints = {}, GL::Object *parent = nullptr) noexcept;
+  Window (const char *title, const Monitor &monitor, const GL::VideoMode &videoMode, GL::Object *parent = nullptr) noexcept;
+  Window (const char *title, const Monitor &monitor, GL::Object *parent = nullptr) noexcept;
+  Window (const char *title, GL::Object *parent = nullptr) noexcept;
 
-  virtual ~Window () noexcept;
+  ~Window () noexcept;
 
   Window (const Window &) = delete;
   Window &operator= (const Window &) = delete;
 
   Window (Window &&) = delete;
   Window &operator= (Window &&) = delete;
-
-  Window *parent () const;
-  void setParent (Window *parent);
 
   bool isWindowed () const;
   bool isFullScreen () const;
@@ -98,6 +95,7 @@ public:
 
   void update ();
   void repaint ();
+  void makeCurrent ();
 
   Modality modality () const;
   void setModality (Modality modality);
@@ -194,9 +192,7 @@ public:
   Geom::Vec2D cursorPos () const;
   void setCursorPos (const Geom::Vec2D &pos);
 
-public:
-  Common::Signal<> destroyed;
-
+protected:
   /// Events
   virtual void closeEvent    ();
   virtual void focusInEvent  ();
@@ -244,9 +240,6 @@ private:
 
   bool mUpdateNeeded = true;
 
-  Window *mParent = nullptr;
   Modality mModality = Modality::NonModal;
-
-  Common::Slots mParentSlots;
 };
 }  // namespace GL

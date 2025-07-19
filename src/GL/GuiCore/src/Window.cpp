@@ -284,7 +284,7 @@ void initWindowParams (GLFWwindow *impl,
 
 namespace GL
 {
-Window::Window (const Geom::Vec2I &size, const char *title, const WindowHints &hints, Window *parent) noexcept
+Window::Window (const Geom::Vec2I &size, const char *title, const WindowHints &hints, GL::Object *parent) noexcept: GL::Object (parent)
 {
   GLFWwindow *impl = createWindowImpl (this, size, title, nullptr, hints);
   mPimpl = impl;
@@ -293,10 +293,9 @@ Window::Window (const Geom::Vec2I &size, const char *title, const WindowHints &h
                     mResizable, mVisible, mDecorated, mFocused, mIconified, mAutoIconify,
                     mFloating, mMaximized, mFocusOnShow, mMousePassthrough,
                     mDoublebuffer, mTransparentFrameBuffer, mHovered, mOpacity);
-  setParent (parent);
 }
 
-Window::Window (const Geom::Vec2I &resolution, const char *title, const Monitor &monitor, const WindowHints &hints, Window *parent) noexcept
+Window::Window (const Geom::Vec2I &resolution, const char *title, const Monitor &monitor, const WindowHints &hints, GL::Object *parent) noexcept: GL::Object (parent)
 {
   GLFWwindow *impl = createWindowImpl (this, resolution, title, static_cast<GLFWmonitor*> (monitor.mPimpl), hints);
   mPimpl = impl;
@@ -305,10 +304,9 @@ Window::Window (const Geom::Vec2I &resolution, const char *title, const Monitor 
                     mResizable, mVisible, mDecorated, mFocused, mIconified, mAutoIconify,
                     mFloating, mMaximized, mFocusOnShow, mMousePassthrough,
                     mDoublebuffer, mTransparentFrameBuffer, mHovered, mOpacity);
-  setParent (parent);
 }
 
-Window::Window (const char *title, const Monitor &monitor, const GL::VideoMode &videoMode, Window *parent) noexcept
+Window::Window (const char *title, const Monitor &monitor, const GL::VideoMode &videoMode,GL::Object *parent) noexcept: GL::Object (parent)
 {
   GL::WindowHints hints = videoModeHints (videoMode);
   GLFWwindow *impl = createWindowImpl (this, videoMode.size (), title, static_cast<GLFWmonitor*> (monitor.mPimpl), hints);
@@ -318,14 +316,13 @@ Window::Window (const char *title, const Monitor &monitor, const GL::VideoMode &
                     mResizable, mVisible, mDecorated, mFocused, mIconified, mAutoIconify,
                     mFloating, mMaximized, mFocusOnShow, mMousePassthrough,
                     mDoublebuffer, mTransparentFrameBuffer, mHovered, mOpacity);
-  setParent (parent);
 }
 
-Window::Window (const char *title, const Monitor &monitor, Window *parent) noexcept: Window (title, monitor, monitor.videoMode (), parent)
+Window::Window (const char *title, const Monitor &monitor, GL::Object *parent) noexcept: Window (title, monitor, monitor.videoMode (), parent)
 {
 }
 
-Window::Window (const char *title, Window *parent) noexcept: Window (title, GL::Application::primaryMonitor (), parent)
+Window::Window (const char *title, GL::Object *parent) noexcept: Window (title, GL::Application::primaryMonitor (), parent)
 {
 }
 
@@ -349,8 +346,6 @@ void Window::destroy ()
 
       if (mModality == Modality::ApplicationModal)
         GL::ApplicationPrivate::allApplicationModals.erase (this);
-
-      destroyed.notify ();
     }
 }
 
@@ -365,6 +360,12 @@ void Window::repaint ()
   glfwMakeContextCurrent (impl);
   renderEvent (GL::RenderEvent (Geom::RectI { {0, 0}, mSize }));
   glfwSwapBuffers (impl);
+}
+
+void Window::makeCurrent ()
+{
+  GLFWwindow *impl = toGLFWwindow (mPimpl);
+  glfwMakeContextCurrent (impl);
 }
 
 Window::Modality Window::modality () const
@@ -387,28 +388,6 @@ void Window::setModality (Modality modality)
       GL::ApplicationPrivate::allApplicationModals.insert (this);
       focus ();
       requestAttention ();
-    }
-}
-
-Window *Window::parent () const
-{
-  return mParent;
-}
-
-void Window::setParent (Window *window)
-{
-  if (mParent == window)
-    return;
-
-  mParent = window;
-
-  mParentSlots.disconnectAll ();
-  if (window)
-    {
-      mParentSlots.connect (window->destroyed, [&] {
-        mParent = nullptr;
-        destroy ();
-      });
     }
 }
 

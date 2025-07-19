@@ -16,7 +16,7 @@ add_library (LibGL_GuiCore
              src/Application.cpp
              src/ApplicationPrivate.cpp
              src/Monitor.cpp
-             src/ImplCast.inl
+             src/Object.cpp
 )
 
 target_include_directories(LibGL_GuiCore PUBLIC include)
