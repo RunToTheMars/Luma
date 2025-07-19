@@ -2,6 +2,7 @@
 
 #include "Geometry/Rect.h"
 #include "Geometry/Vector.h"
+#include "GL/Object.h"
 
 namespace std
 {
@@ -18,7 +19,7 @@ class Window;
 class VideoMode;
 class VideoModeList;
 
-class Monitor
+class Monitor: public GL::Object
 {
 public:
   ~Monitor ();

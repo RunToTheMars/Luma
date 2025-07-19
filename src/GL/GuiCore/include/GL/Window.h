@@ -68,13 +68,13 @@ public:
     ApplicationModal
   };
 
-  Window (const Geom::Vec2I &size, const char *title, const WindowHints &hints = {}, GL::Object *parent = nullptr) noexcept;
-  Window (const Geom::Vec2I &resolution, const char *title, const Monitor &monitor, const WindowHints &hints = {}, GL::Object *parent = nullptr) noexcept;
-  Window (const char *title, const Monitor &monitor, const GL::VideoMode &videoMode, GL::Object *parent = nullptr) noexcept;
-  Window (const char *title, const Monitor &monitor, GL::Object *parent = nullptr) noexcept;
-  Window (const char *title, GL::Object *parent = nullptr) noexcept;
+  Window (const Geom::Vec2I &size, const char *title, const WindowHints &hints = {}, GL::Object *parent = nullptr);
+  Window (const Geom::Vec2I &resolution, const char *title, const Monitor &monitor, const WindowHints &hints = {}, GL::Object *parent = nullptr);
+  Window (const char *title, const Monitor &monitor, const GL::VideoMode &videoMode, GL::Object *parent = nullptr);
+  Window (const char *title, const Monitor &monitor, GL::Object *parent = nullptr);
+  Window (const char *title, GL::Object *parent = nullptr);
 
-  ~Window () noexcept;
+  ~Window ();
 
   Window (const Window &) = delete;
   Window &operator= (const Window &) = delete;

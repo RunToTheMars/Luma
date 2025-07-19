@@ -1,6 +1,6 @@
 #include "Geometry/Vector.h"
 
-namespace GL
+namespace Luma::Core
 {
 class HoverEvent
 {
@@ -13,4 +13,4 @@ public:
 private:
   Geom::Vec2D mPos;
 };
-}  // namespace GL
+}  // namespace Luma::Core

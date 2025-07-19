@@ -284,7 +284,7 @@ void initWindowParams (GLFWwindow *impl,
 
 namespace GL
 {
-Window::Window (const Geom::Vec2I &size, const char *title, const WindowHints &hints, GL::Object *parent) noexcept: GL::Object (parent)
+Window::Window (const Geom::Vec2I &size, const char *title, const WindowHints &hints, GL::Object *parent): GL::Object (parent)
 {
   GLFWwindow *impl = createWindowImpl (this, size, title, nullptr, hints);
   mPimpl = impl;
@@ -295,7 +295,7 @@ Window::Window (const Geom::Vec2I &size, const char *title, const WindowHints &h
                     mDoublebuffer, mTransparentFrameBuffer, mHovered, mOpacity);
 }
 
-Window::Window (const Geom::Vec2I &resolution, const char *title, const Monitor &monitor, const WindowHints &hints, GL::Object *parent) noexcept: GL::Object (parent)
+Window::Window (const Geom::Vec2I &resolution, const char *title, const Monitor &monitor, const WindowHints &hints, GL::Object *parent): GL::Object (parent)
 {
   GLFWwindow *impl = createWindowImpl (this, resolution, title, static_cast<GLFWmonitor*> (monitor.mPimpl), hints);
   mPimpl = impl;
@@ -306,7 +306,7 @@ Window::Window (const Geom::Vec2I &resolution, const char *title, const Monitor 
                     mDoublebuffer, mTransparentFrameBuffer, mHovered, mOpacity);
 }
 
-Window::Window (const char *title, const Monitor &monitor, const GL::VideoMode &videoMode,GL::Object *parent) noexcept: GL::Object (parent)
+Window::Window (const char *title, const Monitor &monitor, const GL::VideoMode &videoMode,GL::Object *parent): GL::Object (parent)
 {
   GL::WindowHints hints = videoModeHints (videoMode);
   GLFWwindow *impl = createWindowImpl (this, videoMode.size (), title, static_cast<GLFWmonitor*> (monitor.mPimpl), hints);
@@ -318,15 +318,15 @@ Window::Window (const char *title, const Monitor &monitor, const GL::VideoMode &
                     mDoublebuffer, mTransparentFrameBuffer, mHovered, mOpacity);
 }
 
-Window::Window (const char *title, const Monitor &monitor, GL::Object *parent) noexcept: Window (title, monitor, monitor.videoMode (), parent)
+Window::Window (const char *title, const Monitor &monitor, GL::Object *parent): Window (title, monitor, monitor.videoMode (), parent)
 {
 }
 
-Window::Window (const char *title, GL::Object *parent) noexcept: Window (title, GL::Application::primaryMonitor (), parent)
+Window::Window (const char *title, GL::Object *parent): Window (title, GL::Application::primaryMonitor (), parent)
 {
 }
 
-Window::~Window () noexcept
+Window::~Window ()
 {
   destroy ();
 }

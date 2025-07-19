@@ -4,11 +4,31 @@
 
 // namespace GL
 // {
-// Widget::Widget () noexcept
+
+// class WidgetImpl
+// {
+// public:
+//   WidgetImpl (Window *parentWindow);
+//   WidgetImpl ();
+//   WidgetImpl ();
+
+//   Widget *parentWidget = nullptr;
+//   Window *parentWindow = nullptr;
+// };
+
+// Widget::Widget (): mPimpl (std::make_unique<WidgetImpl> ())
 // {
 // }
 
-// Widget::~Widget () noexcept
+// Widget::Widget (Window &parentWindow): mPimpl (std::make_unique<WidgetImpl> ())
+// {
+// }
+
+// Widget::Widget (Widget &parentWidget): mPimpl (std::make_unique<WidgetImpl> ())
+// {
+// }
+
+// Widget::~Widget ()
 // {
 // }
 

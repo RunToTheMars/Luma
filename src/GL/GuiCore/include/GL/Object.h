@@ -23,6 +23,12 @@ public:
   Common::Signal<> &destroyed ();
 
 private:
+  Object (const Object &) = delete;
+  Object (Object &&) = delete;
+
+  Object &operator= (const Object &) = delete;
+  Object &operator= (Object &&) = delete;
+
   std::unique_ptr<ObjectImpl> mPimpl;
 };
 }  // namespace GL

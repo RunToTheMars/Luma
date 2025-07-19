@@ -5,10 +5,12 @@
 #include "GL/Window.h"
 #include "ImplCast.inl"
 #include <GLFW/glfw3.h>
+#include <list>
 
 namespace GL
 {
-Common::Signal<const Monitor &, bool> Application::monitorEvent;
+Common::Signal<const Monitor &> Application::monitorAdded;
+Common::Signal<const Monitor &> Application::monitorRemoved;
 }
 
 namespace
@@ -16,10 +18,11 @@ namespace
 void MonitorEventHandle (GLFWmonitor *monitor, int event)
 {
   GL::Monitor *GLmonitor = toGLmonitor (monitor);
-  GL::Application::monitorEvent.notify (*GLmonitor, event == GLFW_TRUE);
+  if (event == GLFW_CONNECTED)
+    GL::Application::monitorAdded.notify (*GLmonitor);
+  else
+    GL::Application::monitorRemoved.notify (*GLmonitor);
 }
-
-// GL::Widget *gFocusWidget = nullptr;
 }  // namespace
 
 namespace GL

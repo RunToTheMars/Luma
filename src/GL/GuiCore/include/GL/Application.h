@@ -2,9 +2,8 @@
 
 #include "Common/Signal.h"
 
-namespace GL
+namespace Luma::Core
 {
-class Widget;
 class Window;
 class Monitor;
 class MonitorList;
@@ -18,17 +17,15 @@ public:
   void runEventLoop ();
   void breakEventLoop ();
 
-  // GL::Widget *focusWidget ();
-  // void setFocusWidget (GL::Widget *widget);
-
-  static GL::Window *focusWindow ();
+  static Window *focusWindow ();
 
   static Monitor primaryMonitor ();
   static MonitorList monitorList ();
 
-  static Common::Signal<const Monitor &, bool> monitorEvent;
+  static Common::Signal<const Monitor &> monitorAdded;
+  static Common::Signal<const Monitor &> monitorRemoved;
 
 private:
   bool mInEventLoop = false;
 };
-}  // namespace GL
+}  // namespace Luma::Core
