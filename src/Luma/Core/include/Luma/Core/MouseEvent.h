@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Luma/Core/Vector.h"
+#include "Luma/Geom/Vector.h"
 
 namespace Luma::Core {
 enum class MouseButton {

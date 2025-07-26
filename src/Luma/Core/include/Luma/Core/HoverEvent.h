@@ -1,9 +1,11 @@
 #pragma once
 
-#include "Luma/Core/Vector.h"
+#include "Luma/Geom/Vector.h"
 
 namespace Luma::Core
 {
+using namespace Luma::Geom;
+
 class HoverEvent
 {
 public:

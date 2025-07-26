@@ -8,19 +8,14 @@ project(HelloWorld                      # PROJECT_NAME
 set(CMAKE_CXX_STANDARD 20)          # Версия стандарта С++
 set(CMAKE_CXX_STANDARD_REQUIRED ON) # Обязательно ли использовать именно этот стандарт, или можно выше.
 
-#add_subdirectory(src/Common/Geometry)
-#add_subdirectory(src/Common/Signal)
-#add_subdirectory(src/Common/DoAfterScope)
+add_subdirectory(src/glew)
+add_subdirectory(src/GLASCII)
 
-add_subdirectory(src/GL/glew)
-add_subdirectory(src/GL/ASCII)
-#add_subdirectory(src/GL/ShaderProgram)
-add_subdirectory(src/GL/Buffer)
-#add_subdirectory(src/GL/VertexArray)
-#add_subdirectory(src/GL/Widget)
-#add_subdirectory(src/GL/GuiCore)
-
+add_subdirectory(src/Luma/RaiiUtils)
+add_subdirectory(src/Luma/Geom)
+add_subdirectory(src/Luma/Signal)
 add_subdirectory(src/Luma/Core)
+add_subdirectory(src/Luma/GL)
 
 #add_subdirectory(src/Targets/HelloWindow)
 #add_subdirectory(src/Targets/HelloWindowEvents)

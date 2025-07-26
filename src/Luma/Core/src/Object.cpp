@@ -1,13 +1,12 @@
 #include "Luma/Core/Object.h"
 #include "ApplicationImpl.h"
-#include "Luma/Core/Application.h"
-#include "Luma/Core/Signal.h"
+#include "Luma/Signal/Signal.h"
 #include <vector>
 
-namespace Luma
+namespace Luma::Core
 {
-namespace Core
-{
+using namespace Luma::Signal;
+
 class ObjectImpl
 {
 public:
@@ -15,7 +14,7 @@ public:
   bool inDelete = false;
   std::vector<Object *> childrens;
 
-  Luma::Core::Signal<> destroyed;
+  Luma::Signal::Signal<> destroyed;
 };
 
 Object::Object (Object *parent) : mPimpl (std::make_unique<ObjectImpl> ()) { setParent (parent); }
@@ -71,6 +70,5 @@ void Object::deleteLater ()
   ApplicationImpl::objectToDelete.insert (this);
 }
 
-Luma::Core::Signal<> &Object::destroyed () { return mPimpl->destroyed; }
-}  // namespace Core
-}  // namespace Luma
+Luma::Signal::Signal<> &Object::destroyed () { return mPimpl->destroyed; }
+}  // namespace Luma::Core

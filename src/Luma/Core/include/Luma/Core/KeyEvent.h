@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Luma/Core/Vector.h"
-
 namespace Luma::Core
 {
 enum class KeyAction {

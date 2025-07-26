@@ -19,4 +19,6 @@ add_library (LibLuma_Core
 target_include_directories(LibLuma_Core PUBLIC include)
 
 target_link_libraries(LibLuma_Core
-                      PRIVATE glfw)
+                      PRIVATE glfw
+                      PUBLIC LibLuma_Signal
+                      PUBLIC LibLuma_Geom)

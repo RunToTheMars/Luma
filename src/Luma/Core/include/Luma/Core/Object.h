@@ -2,11 +2,13 @@
 
 #include <memory>
 
+#include "Luma/Signal/Signal_fwd.h"
+
 namespace Luma::Core
 {
+using namespace Luma::Signal;
+
 class ObjectImpl;
-template<typename... Args>
-class Signal;
 
 class Object
 {

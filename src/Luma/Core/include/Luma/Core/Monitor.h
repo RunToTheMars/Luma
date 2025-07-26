@@ -1,17 +1,13 @@
 #pragma once
 
 #include "Luma/Core/Object.h"
-#include "Luma/Core/Rect.h"
-#include "Luma/Core/Vector.h"
-
-namespace std
-{
-template <typename T>
-class optional;
-}
+#include "Luma/Geom/Rect.h"
+#include "Luma/Geom/Vector.h"
 
 namespace Luma::Core
 {
+using namespace Luma::Geom;
+
 class Application;
 class Monitor;
 class MonitorList;

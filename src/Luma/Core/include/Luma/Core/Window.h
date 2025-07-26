@@ -1,12 +1,14 @@
 #pragma once
 
 #include "Luma/Core/Object.h"
-#include "Luma/Core/Rect.h"
-#include "Luma/Core/Vector.h"
+#include "Luma/Geom/Rect.h"
+#include "Luma/Geom/Vector.h"
 #include <optional>
 
 namespace Luma::Core
 {
+using namespace Luma::Geom;
+
 class KeyEvent;
 class HoverEvent;
 class MouseEvent;

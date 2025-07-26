@@ -1,5 +1,5 @@
-#include "GL/ASCII/v150/Debug/TextLineShader.h"
-#include "GL/Buffer.h"
+#include "GLASCII/v150/Debug/TextLineShader.h"
+#include "Luma/GL/Buffer.h"
 #include "Luma/Core/Application.h"
 #include "Luma/Core/KeyEvent.h"
 #include "Luma/Core/Monitor.h"
@@ -216,8 +216,8 @@ private:
 
   bool mIsInited = false;
 
-  GL::ASCII::v150::Debug::TextLineShader mTextLineShader;
-  GL::Buffer mTextVBO;
+  GLASCII::v150::Debug::TextLineShader mTextLineShader;
+  Luma::GL::Buffer mTextVBO;
 
   std::chrono::steady_clock::time_point mStartTime;
   int mFrames = 0;

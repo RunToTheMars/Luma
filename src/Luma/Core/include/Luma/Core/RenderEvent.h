@@ -1,9 +1,11 @@
 #pragma once
 
-#include "Luma/Core/Rect.h"
+#include "Luma/Geom/Rect.h"
 
 namespace Luma::Core
 {
+using namespace Luma::Geom;
+
 class RenderEvent
 {
 public:

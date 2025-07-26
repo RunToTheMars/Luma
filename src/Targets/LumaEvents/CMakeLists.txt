@@ -11,6 +11,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_executable(LumaEvents src/main.cpp)
 target_link_libraries(LumaEvents
                       PRIVATE LibLuma_Core
-                      PRIVATE LibGL_ASCII
-                      PRIVATE LibGL_Buffer
+                      PRIVATE LibLuma_GL
+                      PRIVATE LibGLASCII
                       PRIVATE libglew_static)
