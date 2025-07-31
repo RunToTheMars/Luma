@@ -124,12 +124,15 @@ private:
         glewInit ();
 
         mIsInited = true;
-        mTextLineShader.init ();
+        mTextLineShader.create ();
 
         mTextLineShader.bind ();
-        mTextLineShader.setPosition (-1.f, -1.f, 0.f);
+        mTextLineShader.setPosition (0.f, 0.f, 0.f);
         mTextLineShader.setColor (0.f, 1.f, 0.f, 1.f);
         mTextLineShader.setBackgroundColor (0.f, 0.f, 0.f, 0.f);
+        mTextLineShader.setSize (GLASCII::v150::Debug::glyphTextureWidth (),
+                                 GLASCII::v150::Debug::glyphTextureHeight ());
+
         mTextLineShader.unbind ();
 
         mTextVBO.create ();
@@ -142,6 +145,11 @@ private:
       }
 
     Luma::Core::Vec2I frameBufferSize = Luma::Core::Window::frameBufferSize ();
+    float modelViewProjection[16] = { 2.f / frameBufferSize[0], 0.f                     , 0.f, 0.f,
+                                      0.f                     , 2.f / frameBufferSize[1], 0.f, 0.f,
+                                      0.f                     , 0.f                     , 1.f, 0.f,
+                                     -1.f                     , -1.f                    , 0.f, 1.f};
+
     Luma::Core::Vec4F color = {Luma::Core::Window::pos ()[0] / 1000.f, 0.f, 0.f, 1.f};
 
     update ();
@@ -154,15 +162,15 @@ private:
 
     if (Luma::Core::Window::isHovered ())
       {
-        Luma::Core::Vec2F glPos;
         Luma::Core::Vec2D cursorPos = Luma::Core::Window::cursorPos ();
-        glPos[0] = 2. * cursorPos[0] / frameBufferSize[0] - 1.f;
-        glPos[1] = 1.f - 2. * cursorPos[1] / frameBufferSize[1];
+
+        glMatrixMode (GL_MODELVIEW);
+        glLoadMatrixf (modelViewProjection);
 
         glPointSize (8.0f);
         glBegin (GL_POINTS);
         glColor3f (0.0f, 0.0f, 1.0f);
-        glVertex2f (glPos[0], glPos[1]);
+        glVertex2f (cursorPos[0], frameBufferSize[1] - cursorPos[1]);
         glEnd ();
       }
 
@@ -185,17 +193,14 @@ private:
 
 
     mTextVBO.bind ();
-    glVertexAttribIPointer (mTextLineShader.attributeCodeLocation (), 1, GL_UNSIGNED_BYTE, 0, (void *) nullptr);  /// Use current binded GL_ARRAY_BUFFER
+    glVertexAttribIPointer (mTextLineShader.textAttributeLocation (), 1, GL_UNSIGNED_BYTE, 0, (void *) nullptr);  /// Use current binded GL_ARRAY_BUFFER
 
     mTextLineShader.bind ();
+    mTextLineShader.setModelViewProjectionMatrix (modelViewProjection);
 
-    mTextLineShader.setSize (
-        2.f * GL::ASCII::v150::Debug::glyphTextureWidth () / frameBufferSize[0],
-        2.f * GL::ASCII::v150::Debug::glyphTextureHeight () / frameBufferSize[1]);
-
-    glEnableVertexAttribArray (mTextLineShader.attributeCodeLocation ());
+    glEnableVertexAttribArray (mTextLineShader.textAttributeLocation ());
     glDrawArrays (GL_POINTS /*mode*/, 0 /* first */, 9 /* count */);
-    glDisableVertexAttribArray (mTextLineShader.attributeCodeLocation ());
+    glDisableVertexAttribArray (mTextLineShader.textAttributeLocation ());
     mTextLineShader.unbind ();
 
     mTextVBO.unbind ();

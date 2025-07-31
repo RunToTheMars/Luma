@@ -9,6 +9,7 @@
 #include "Luma/Core/MoveEvent.h"
 #include "Luma/Core/RenderEvent.h"
 #include "Luma/Core/ResizeEvent.h"
+#include "Luma/Core/ScaleEvent.h"
 #include <GLFW/glfw3.h>
 
 namespace Luma::Core
@@ -104,6 +105,7 @@ public:
   {
     Window *GLwindow = toGLwindow (glfwGetWindowUserPointer (window));
     GLwindow->mContentScale = {xscale, yscale};
+    GLwindow->scaleEvent (GLwindow->mContentScale);
   }
 
   static void WindowKeyEventHandle (GLFWwindow *window, int key, int scancode, int action, int mods)
@@ -809,6 +811,10 @@ void Window::enterEvent ()
 }
 
 void Window::leaveEvent ()
+{
+}
+
+void Window::scaleEvent (const ScaleEvent &)
 {
 }
 

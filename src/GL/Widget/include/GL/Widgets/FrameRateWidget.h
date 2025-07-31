@@ -10,7 +10,7 @@ class FrameRateWidget : public GL::Widget
 {
 public:
   FrameRateWidget () noexcept;
-  ~FrameRateWidget () noexcept override;
+  ~FrameRateWidget () noexcept ;
 
   void renderEvent () noexcept override;
 

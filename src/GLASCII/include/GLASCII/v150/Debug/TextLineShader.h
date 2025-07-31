@@ -2,11 +2,7 @@
 
 #include "Common.h"
 
-namespace GLASCII
-{
-namespace v150
-{
-namespace Debug
+namespace GLASCII::v150::Debug
 {
 class TextLineShader
 {
@@ -19,16 +15,20 @@ public:
   TextLineShader &operator= (const TextLineShader &) = delete;
   TextLineShader &operator= (TextLineShader &&) = delete;
 
-  void init () noexcept;
+  /// \note This function call bind and unbind
+  void create () noexcept;
+  bool isCreated () const noexcept;
+  void destroy () noexcept;
 
   const float *position () const noexcept;
   const float *color () const noexcept;
   const float *backgroundColor () const noexcept;
   const float *size () const noexcept;
+  const float *modelViewProjectionMatrix () const noexcept;
 
   /// -------------------------------
-  /// \note Only for Inited
-  int attributeCodeLocation () const;
+  /// \note Only for Created
+  int textAttributeLocation () const;
 
   void bind ();
   void unbind ();
@@ -47,6 +47,8 @@ public:
 
   void setSize (const float *size) noexcept;
   void setSize (float width, float height) noexcept;
+
+  void setModelViewProjectionMatrix (const float *matrix) noexcept;
   /// -------------------------------
 
 private:
@@ -56,14 +58,17 @@ private:
   int mUniformColorLoc = 0;
   int mUniformBackgroundColorLoc = 0;
   int mUniformSizeLoc = 0;
+  int mUniformModelViewProjectionMatrixLoc = 0;
 
-  int mAttributeCodeLoc = 0;
+  int mTextAttributeLoc = 0;
 
   float mPosition[3] = {0.f, 0.f, 0.f};
   float mColor[4] = {0.f, 0.f, 0.f};
   float mBackgroundColor[4] = {0.f, 0.f, 0.f, 0.f};
   float mSize[2] = {0.f, 0.f};
+  float mModelViewProjectionMatrix[16] = {1.f, 0.f, 0.f, 0.f,
+                                          0.f, 1.f, 0.f, 0.f,
+                                          0.f, 0.f, 1.f, 0.f,
+                                          0.f, 0.f, 0.f, 1.f};
 };
-}  // namespace Debug
-}  // namespace v150
-}  // namespace GLASCII
+}  // namespace GLASCII::v150::Debug

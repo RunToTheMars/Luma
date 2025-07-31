@@ -15,6 +15,7 @@ class MouseEvent;
 class ResizeEvent;
 class MoveEvent;
 class RenderEvent;
+class ScaleEvent;
 class Monitor;
 class VideoMode;
 class Application;
@@ -209,6 +210,7 @@ protected:
   virtual void mouseEvent    (const MouseEvent &);
   virtual void enterEvent    ();
   virtual void leaveEvent    ();
+  virtual void scaleEvent    (const ScaleEvent &);
 
 private:
   friend class Luma::Core::Application;

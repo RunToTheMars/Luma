@@ -1,5 +1,7 @@
 #include "GLASCII/v150/Debug/TextLineShader.h"
-#include <GL/glew.h> /* for OpenGL */
+#include "Utils.inl"
+#include <GL/glew.h>
+#include <cstring>
 #include <stddef.h>
 
 namespace GLASCII
@@ -12,22 +14,27 @@ TextLineShader::TextLineShader () noexcept
 {
 }
 
-void TextLineShader::init () noexcept
+TextLineShader::~TextLineShader () noexcept
+{
+  destroy ();
+}
+
+void TextLineShader::create () noexcept
 {
   const char *vertexShaderSource = R"(#version 130
 
-                                      attribute uint a_ascii_code; // vanila vertex attribute: ascii code (belongs to [0, 255])
+                                      attribute uint aAsciiCode;
 
-                                      uniform vec3 u_gl_position;    // position of word's left bottom
-                                      uniform vec2 u_gl_glyph_size;  // gl size of each glyph
+                                      uniform vec3 uPosition;
+                                      uniform vec2 uSize;
 
-                                      varying uint v_ascii_code;
+                                      varying uint vAsciiCode;
 
                                       void main ()
                                       {
-                                        v_ascii_code = a_ascii_code;
-                                        gl_Position = vec4 (u_gl_position, 1);
-                                        gl_Position.x += gl_VertexID * u_gl_glyph_size.x;
+                                        vAsciiCode = aAsciiCode;
+                                        gl_Position = vec4 (uPosition, 1);
+                                        gl_Position.x += gl_VertexID * uSize.x;
                                       }
                                     )";
 
@@ -36,47 +43,48 @@ void TextLineShader::init () noexcept
                                      layout (points) in;
                                      layout (triangle_strip, max_vertices = 4) out;
 
-                                     in uint v_ascii_code[]; // vertex attribute: ascii code (belongs to [0, 255])
+                                     in uint vAsciiCode[];
 
-                                     uniform vec2  u_gl_glyph_size; // gl size of each glyph
+                                     uniform vec2 uSize;
+                                     uniform mat4 uModelViewProjectionMatrix;
 
-                                     flat   out uint p_ascii_code; // primitive attribute: ascii code (belongs to [0, 255])
-                                     smooth out vec2 f_glyph_uv;   // fragment attribute: UV texels coords
+                                     flat   out uint pAsciiCode;
+                                     smooth out vec2 fGlyphUV;
 
                                      #define GLYPH_WIDTH 8.
                                      #define GLYPH_HEIGHT 16.
 
-                                     void emit_vertex (in vec2 glyph_offset, in vec2 glyph_uv);
+                                     void emitVertex (in vec2 glyphOffset, in vec2 glyphUV);
 
                                      void main()
                                      {
-                                         p_ascii_code = v_ascii_code[0];
+                                         pAsciiCode = vAsciiCode[0];
 
-                                         emit_vertex (vec2 (0., 0.), vec2 (0., GLYPH_HEIGHT));
-                                         emit_vertex (vec2 (0., u_gl_glyph_size.y), vec2 (0., 0.));
-                                         emit_vertex (vec2 (u_gl_glyph_size.x, 0.), vec2 (GLYPH_WIDTH, GLYPH_HEIGHT));
-                                         emit_vertex (u_gl_glyph_size, vec2 (GLYPH_WIDTH, 0.));
+                                         emitVertex (vec2 (0., 0.), vec2 (0., GLYPH_HEIGHT));
+                                         emitVertex (vec2 (0., uSize.y), vec2 (0., 0.));
+                                         emitVertex (vec2 (uSize.x, 0.), vec2 (GLYPH_WIDTH, GLYPH_HEIGHT));
+                                         emitVertex (uSize, vec2 (GLYPH_WIDTH, 0.));
 
                                          EndPrimitive ();
                                      }
 
-                                     void emit_vertex (in vec2 glyph_offset, in vec2 glyph_uv)
+                                     void emitVertex (in vec2 glyphOffset, in vec2 glyphUV)
                                      {
-                                         gl_Position = vec4 (gl_in[0].gl_Position.xy + glyph_offset, gl_in[0].gl_Position.zw);
-                                         f_glyph_uv = glyph_uv;
+                                         gl_Position = uModelViewProjectionMatrix * vec4 (gl_in[0].gl_Position.xy + glyphOffset, gl_in[0].gl_Position.zw);
+                                         fGlyphUV = glyphUV;
                                          EmitVertex ();
                                      }
                                     )";
 
   const char *fragmentShaderSource = R"(#version 130
 
-                                     flat   in uint p_ascii_code;  // primitive attribute: ascii code (belongs to [0, 255])
-                                     smooth in vec2 f_glyph_uv;    // fragment attribute: UV texels coords
+                                     flat   in uint pAsciiCode;  // primitive attribute: ascii code (belongs to [0, 255])
+                                     smooth in vec2 fGlyphUV;    // fragment attribute: UV texels coords
 
-                                     uniform vec4 u_color;            // color of word
-                                     uniform vec4 u_background_color; // color of word background
+                                     uniform vec4 uColor;            // color of word
+                                     uniform vec4 uBackgroundColor; // color of word background
 
-                                     out vec4 FragColor;
+                                     out vec4 fragColor;
 
                                      const uvec4 glyphs[96] = uvec4[96](
                                          uvec4 ( uint (0x00000000), uint (0x00000000), uint (0x00000000), uint (0x00000000) ), // 0x20: SPACE
@@ -177,25 +185,25 @@ void TextLineShader::init () noexcept
                                          uvec4 ( uint (0x00000000), uint (0x00000000), uint (0x00000000), uint (0x00000000) )  // 0x7F: BACKSPACE
                                          );
 
-                                     uint pixel_in_glyph (in vec2 glyph_uv, in uint ascii_code);
+                                     uint pixeInGlyph (in vec2 glyphUV, in uint AsciiCode);
                                      void main()
                                      {
-                                         FragColor = mix (u_background_color, u_color, pixel_in_glyph (f_glyph_uv, p_ascii_code));
+                                         fragColor = mix (uBackgroundColor, uColor, pixeInGlyph (fGlyphUV, pAsciiCode));
                                      }
 
-                                     uint __pixel_in_glyph (in uvec2 glyph_uv /*[0, 7] x [0, 15]*/, in uint ascii_code /*[0, 255]*/)
+                                     uint __pixeInGlyph (in uvec2 glyphUV /*[0, 7] x [0, 15]*/, in uint AsciiCode /*[0, 255]*/)
                                      {
-                                         if (ascii_code < uint (0x20) || ascii_code > uint (0x7F))
+                                         if (AsciiCode < uint (0x20) || AsciiCode > uint (0x7F))
                                              return 0u;
 
-                                         uint glyph_four_lines = glyphs[ascii_code - uint (0x20)][glyph_uv.y / 4u];
-                                         uint current_line = (glyph_four_lines >> (8u * (3u - (glyph_uv.y) % 4u))) & uint (0xff);
-                                         return (current_line >> (7u - glyph_uv.x)) & uint (0x01);
+                                         uint glyphFourLines = glyphs[AsciiCode - uint (0x20)][glyphUV.y / 4u];
+                                         uint glyphCurrentLine = (glyphFourLines >> (8u * (3u - (glyphUV.y) % 4u))) & uint (0xff);
+                                         return (glyphCurrentLine >> (7u - glyphUV.x)) & uint (0x01);
                                      }
 
-                                     uint pixel_in_glyph (in vec2 glyph_uv, in uint ascii_code)
+                                     uint pixeInGlyph (in vec2 glyphUV, in uint AsciiCode)
                                      {
-                                         return __pixel_in_glyph (uvec2 (floor (glyph_uv)), ascii_code);
+                                         return __pixeInGlyph (uvec2 (floor (glyphUV)), AsciiCode);
                                      }
                                     )";
 
@@ -220,21 +228,44 @@ void TextLineShader::init () noexcept
 
   glLinkProgram (mProgramId);
 
-  mUniformPositionLoc        = glGetUniformLocation (mProgramId, "u_gl_position");
-  mUniformColorLoc           = glGetUniformLocation (mProgramId, "u_color");
-  mUniformBackgroundColorLoc = glGetUniformLocation (mProgramId, "u_background_color");
-  mUniformSizeLoc            = glGetUniformLocation (mProgramId, "u_gl_glyph_size");
-  mAttributeCodeLoc          = glGetAttribLocation (mProgramId, "a_ascii_code");
-
   glDeleteShader (vertexShaderId);
   glDeleteShader (geomtryShaderId);
   glDeleteShader (fragmentShaderId);
+
+  mUniformPositionLoc                  = glGetUniformLocation (mProgramId, "uPosition");
+  mUniformColorLoc                     = glGetUniformLocation (mProgramId, "uColor");
+  mUniformBackgroundColorLoc           = glGetUniformLocation (mProgramId, "uBackgroundColor");
+  mUniformSizeLoc                      = glGetUniformLocation (mProgramId, "uSize");
+  mUniformModelViewProjectionMatrixLoc = glGetUniformLocation (mProgramId, "uModelViewProjectionMatrix");
+
+  mTextAttributeLoc = glGetAttribLocation (mProgramId, "aAsciiCode");
+
+  if (isCreated ())
+    {
+      bind ();
+      glUniformMatrix4fv (mUniformModelViewProjectionMatrixLoc, 1, GL_FALSE, mModelViewProjectionMatrix);
+      unbind ();
+    }
 }
 
-TextLineShader::~TextLineShader () noexcept
+
+bool TextLineShader::isCreated () const noexcept
 {
-  if (mProgramId)
-    glDeleteProgram (mProgramId);
+  return mProgramId;
+}
+
+void TextLineShader::destroy () noexcept
+{
+  if (isCreated ())
+    {
+      glDeleteProgram (mProgramId);
+      mProgramId = 0;
+    }
+}
+
+int TextLineShader::textAttributeLocation () const
+{
+  return mTextAttributeLoc;
 }
 
 void TextLineShader::bind ()
@@ -267,6 +298,11 @@ const float *TextLineShader::size () const noexcept
   return mSize;
 }
 
+const float *TextLineShader::modelViewProjectionMatrix () const noexcept
+{
+  return mModelViewProjectionMatrix;
+}
+
 void TextLineShader::setPosition (const float *pos) noexcept
 {
   return setPosition (pos[0], pos[1], pos[2]);
@@ -274,6 +310,15 @@ void TextLineShader::setPosition (const float *pos) noexcept
 
 void TextLineShader::setPosition (float x, float y, float z) noexcept
 {
+  if (   almostEqual (x, mPosition[0])
+      && almostEqual (y, mPosition[1])
+      && almostEqual (z, mPosition[2]))
+    return;
+
+  mPosition[0] = x;
+  mPosition[1] = y;
+  mPosition[2] = z;
+
   glUniform3f (mUniformPositionLoc, x, y, z);
 }
 
@@ -284,6 +329,17 @@ void TextLineShader::setColor (const float *color) noexcept
 
 void TextLineShader::setColor (float r, float g, float b, float a) noexcept
 {
+  if (   almostEqual (r, mColor[0])
+      && almostEqual (g, mColor[1])
+      && almostEqual (b, mColor[2])
+      && almostEqual (b, mColor[3]))
+    return;
+
+  mColor[0] = r;
+  mColor[1] = g;
+  mColor[2] = b;
+  mColor[3] = a;
+
   glUniform4f (mUniformColorLoc, r, g, b, a);
 }
 
@@ -294,6 +350,17 @@ void TextLineShader::setBackgroundColor (const float *color) noexcept
 
 void TextLineShader::setBackgroundColor (float r, float g, float b, float a) noexcept
 {
+  if (   almostEqual (r, mBackgroundColor[0])
+      && almostEqual (g, mBackgroundColor[1])
+      && almostEqual (b, mBackgroundColor[2])
+      && almostEqual (b, mBackgroundColor[3]))
+    return;
+
+  mBackgroundColor[0] = r;
+  mBackgroundColor[1] = g;
+  mBackgroundColor[2] = b;
+  mBackgroundColor[3] = a;
+
   glUniform4f (mUniformBackgroundColorLoc, r, g, b, a);
 }
 
@@ -304,12 +371,40 @@ void TextLineShader::setSize (const float *size) noexcept
 
 void TextLineShader::setSize (float width, float height) noexcept
 {
+  if (   almostEqual (width , mSize[0])
+      && almostEqual (height, mSize[1]))
+    return;
+
+  mSize[0] = width;
+  mSize[1] = height;
+
   glUniform2f (mUniformSizeLoc, width, height);
 }
 
-int TextLineShader::attributeCodeLocation () const
+void TextLineShader::setModelViewProjectionMatrix (const float *matrix) noexcept
 {
-  return mAttributeCodeLoc;
+
+  if (   almostEqual (matrix[0 ], mModelViewProjectionMatrix[0 ])
+      && almostEqual (matrix[1 ], mModelViewProjectionMatrix[1 ])
+      && almostEqual (matrix[2 ], mModelViewProjectionMatrix[2 ])
+      && almostEqual (matrix[3 ], mModelViewProjectionMatrix[3 ])
+      && almostEqual (matrix[4 ], mModelViewProjectionMatrix[4 ])
+      && almostEqual (matrix[5 ], mModelViewProjectionMatrix[5 ])
+      && almostEqual (matrix[6 ], mModelViewProjectionMatrix[6 ])
+      && almostEqual (matrix[7 ], mModelViewProjectionMatrix[7 ])
+      && almostEqual (matrix[8 ], mModelViewProjectionMatrix[8 ])
+      && almostEqual (matrix[9 ], mModelViewProjectionMatrix[9 ])
+      && almostEqual (matrix[10], mModelViewProjectionMatrix[10])
+      && almostEqual (matrix[11], mModelViewProjectionMatrix[11])
+      && almostEqual (matrix[12], mModelViewProjectionMatrix[12])
+      && almostEqual (matrix[13], mModelViewProjectionMatrix[13])
+      && almostEqual (matrix[14], mModelViewProjectionMatrix[14])
+      && almostEqual (matrix[15], mModelViewProjectionMatrix[15]))
+    return;
+
+  memcpy (mModelViewProjectionMatrix, matrix, 16 * sizeof (float));
+
+  glUniformMatrix4fv (mUniformModelViewProjectionMatrixLoc, 1, GL_FALSE, mModelViewProjectionMatrix);
 }
 }
 }
