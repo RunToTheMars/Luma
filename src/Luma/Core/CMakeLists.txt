@@ -14,8 +14,7 @@ add_library (LibLuma_Core
              src/Object.cpp
              src/Application.cpp
              src/Window.cpp
-             src/Monitor.cpp
-             include/Luma/Core/ScaleEvent.h)
+             src/Monitor.cpp)
 
 target_include_directories(LibLuma_Core PUBLIC include)
 

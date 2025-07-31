@@ -16,6 +16,7 @@ class ResizeEvent;
 class MoveEvent;
 class RenderEvent;
 class ScaleEvent;
+class ScrollEvent;
 class Monitor;
 class VideoMode;
 class Application;
@@ -208,6 +209,7 @@ protected:
   virtual void hoverEvent    (const HoverEvent &);
   virtual void keyEvent      (const KeyEvent &);
   virtual void mouseEvent    (const MouseEvent &);
+  virtual void scrollEvent   (const ScrollEvent &);
   virtual void enterEvent    ();
   virtual void leaveEvent    ();
   virtual void scaleEvent    (const ScaleEvent &);

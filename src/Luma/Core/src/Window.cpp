@@ -10,6 +10,7 @@
 #include "Luma/Core/RenderEvent.h"
 #include "Luma/Core/ResizeEvent.h"
 #include "Luma/Core/ScaleEvent.h"
+#include "Luma/Core/ScrollEvent.h"
 #include <GLFW/glfw3.h>
 
 namespace Luma::Core
@@ -122,6 +123,14 @@ public:
     });
   }
 
+  static void WindowScrollEventHandle (GLFWwindow *window, double xoffset, double yoffset)
+  {
+    Window *GLwindow = toGLwindow (glfwGetWindowUserPointer (window));
+    notifyInputEvent (GLwindow, [&] {
+      GLwindow->scrollEvent (ScrollEvent ({xoffset, yoffset}));
+    });
+  }
+
   static void WindowCursorPosChangedHandle (GLFWwindow *window, double xpos, double ypos)
   {
     Window *GLwindow = toGLwindow (glfwGetWindowUserPointer (window));
@@ -201,6 +210,7 @@ GLFWwindow *createWindowImpl (Luma::Core::Window *window, const Luma::Core::Vec2
   glfwSetWindowContentScaleCallback (impl, &Luma::Core::WindowEventDispatcher::WindowContentScaleChangedHandle);
   glfwSetKeyCallback                (impl, &Luma::Core::WindowEventDispatcher::WindowKeyEventHandle);
   glfwSetMouseButtonCallback        (impl, &Luma::Core::WindowEventDispatcher::WindowMouseButtonEventHandle);
+  glfwSetScrollCallback             (impl, &Luma::Core::WindowEventDispatcher::WindowScrollEventHandle);
   glfwSetCursorPosCallback          (impl, &Luma::Core::WindowEventDispatcher::WindowCursorPosChangedHandle);
   glfwSetCursorEnterCallback        (impl, &Luma::Core::WindowEventDispatcher::WindowCursorEnterChangedHandle);
 
@@ -803,6 +813,10 @@ void Window::keyEvent (const KeyEvent &)
 }
 
 void Window::mouseEvent (const MouseEvent &)
+{
+}
+
+void Window::scrollEvent (const ScrollEvent &)
 {
 }
 

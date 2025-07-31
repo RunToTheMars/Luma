@@ -2,6 +2,7 @@
 #include "GLASCII/v150/Debug/TextLineShader.h"
 #include "Luma/Core/Application.h"
 #include "Luma/Core/KeyEvent.h"
+#include "Luma/Core/ScrollEvent.h"
 #include "Luma/Core/Window.h"
 #include "Luma/GL/Buffer.h"
 #include "Luma/GL/VertexArray.h"
@@ -184,14 +185,37 @@ public:
 
     if (event.key () == Luma::Core::Key::Key_Up && (event.action () == Luma::Core::KeyAction::Press || event.action () == Luma::Core::KeyAction::Repeat))
       {
+        addScale (true);
+      }
+
+    if (event.key () == Luma::Core::Key::Key_Down && (event.action () == Luma::Core::KeyAction::Press || event.action () == Luma::Core::KeyAction::Repeat))
+      {
+        addScale (false);
+      }
+  }
+
+  void scrollEvent (const Luma::Core::ScrollEvent &event) override
+  {
+    double offset = event.offset ()[1];
+    addScale (offset > 0.);
+  }
+
+  int scalePercent (int scaleInterval)
+  {
+    return 100 + 5 * scaleInterval;
+  }
+
+  void addScale (bool isUp)
+  {
+    if (isUp)
+      {
         if (int newScalePercent = mScalePercent + scalePercentStep; newScalePercent <= maxScalePercent)
           {
             mScalePercent = newScalePercent;
             update ();
           }
       }
-
-    if (event.key () == Luma::Core::Key::Key_Down && (event.action () == Luma::Core::KeyAction::Press || event.action () == Luma::Core::KeyAction::Repeat))
+    else
       {
         if (int newScalePercent = mScalePercent - scalePercentStep; newScalePercent > 0)
           {
@@ -199,11 +223,6 @@ public:
             update ();
           }
       }
-  }
-
-  int scalePercent (int scaleInterval)
-  {
-    return 100 + 5 * scaleInterval;
   }
 };
 
