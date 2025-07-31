@@ -8,11 +8,11 @@ project(GLASCII
 set(CMAKE_CXX_STANDARD 20)          # Версия стандарта С++
 set(CMAKE_CXX_STANDARD_REQUIRED ON) # Обязательно ли использовать именно этот стандарт, или можно выше.
 
-add_library (LibGLASCII STATIC
-             src/v150/Debug/TextLineShader.cpp
-             src/v150/Debug/TextBoxShader.cpp)
+add_library (LibShader_Triangle STATIC
+             src/v150/TriangleShader.cpp)
 
-target_include_directories(LibGLASCII PUBLIC include)
+target_include_directories(LibShader_Triangle PUBLIC include)
 
-target_link_libraries(LibGLASCII
-                      PRIVATE libglew_static)
+target_link_libraries(LibShader_Triangle
+                      PRIVATE libglew_static
+                      PRIVATE LibShader_Utils)

@@ -16,7 +16,8 @@ target_include_directories(LumaTerminal PUBLIC include)
 
 target_link_libraries(LumaTerminal
                       PRIVATE libglew_static
-                      PRIVATE LibGLASCII
+                      PRIVATE LibShader_ASCII
+                      PRIVATE LibShader_Triangle
                       PRIVATE LibLuma_Core
                       PRIVATE LibLuma_GL)
 

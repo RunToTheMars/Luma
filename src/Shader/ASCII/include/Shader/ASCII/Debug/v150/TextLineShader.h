@@ -1,8 +1,6 @@
 #pragma once
 
-#include "Common.h"
-
-namespace GLASCII::v150::Debug
+namespace Shader::ASCII::Debug::v150
 {
 class TextLineShader
 {
@@ -71,4 +69,4 @@ private:
                                           0.f, 0.f, 1.f, 0.f,
                                           0.f, 0.f, 0.f, 1.f};
 };
-}  // namespace GLASCII::v150::Debug
+}  // namespace Shader::ASCII::v150::Debug

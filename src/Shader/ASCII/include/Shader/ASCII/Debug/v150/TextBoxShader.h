@@ -1,8 +1,7 @@
 #pragma once
 
-#include "Common.h"
 
-namespace GLASCII::v150::Debug
+namespace Shader::ASCII::Debug::v150
 {
 class TextBoxShader
 {
@@ -76,4 +75,4 @@ private:
                                           0.f, 0.f, 0.f, 1.f};
   int mBoxWidth = 16;
 };
-}  // namespace GLASCII::v150::Debug
+}  // namespace Shader::ASCII::v150::Debug

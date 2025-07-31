@@ -1,14 +1,10 @@
-#include "GLASCII/v150/Debug/TextLineShader.h"
-#include "Utils.inl"
+#include "Shader/ASCII/Debug/v150/TextLineShader.h"
+#include "Shader/Utils.h"
 #include <GL/glew.h>
 #include <cstring>
 #include <stddef.h>
 
-namespace GLASCII
-{
-namespace v150
-{
-namespace Debug
+namespace Shader::ASCII::Debug::v150
 {
 TextLineShader::TextLineShader () noexcept
 {
@@ -310,9 +306,9 @@ void TextLineShader::setPosition (const float *pos) noexcept
 
 void TextLineShader::setPosition (float x, float y, float z) noexcept
 {
-  if (   almostEqual (x, mPosition[0])
-      && almostEqual (y, mPosition[1])
-      && almostEqual (z, mPosition[2]))
+  if (   Utils::almostEqual (x, mPosition[0])
+      && Utils::almostEqual (y, mPosition[1])
+      && Utils::almostEqual (z, mPosition[2]))
     return;
 
   mPosition[0] = x;
@@ -329,10 +325,10 @@ void TextLineShader::setColor (const float *color) noexcept
 
 void TextLineShader::setColor (float r, float g, float b, float a) noexcept
 {
-  if (   almostEqual (r, mColor[0])
-      && almostEqual (g, mColor[1])
-      && almostEqual (b, mColor[2])
-      && almostEqual (b, mColor[3]))
+  if (   Utils::almostEqual (r, mColor[0])
+      && Utils::almostEqual (g, mColor[1])
+      && Utils::almostEqual (b, mColor[2])
+      && Utils::almostEqual (b, mColor[3]))
     return;
 
   mColor[0] = r;
@@ -350,10 +346,10 @@ void TextLineShader::setBackgroundColor (const float *color) noexcept
 
 void TextLineShader::setBackgroundColor (float r, float g, float b, float a) noexcept
 {
-  if (   almostEqual (r, mBackgroundColor[0])
-      && almostEqual (g, mBackgroundColor[1])
-      && almostEqual (b, mBackgroundColor[2])
-      && almostEqual (b, mBackgroundColor[3]))
+  if (   Utils::almostEqual (r, mBackgroundColor[0])
+      && Utils::almostEqual (g, mBackgroundColor[1])
+      && Utils::almostEqual (b, mBackgroundColor[2])
+      && Utils::almostEqual (b, mBackgroundColor[3]))
     return;
 
   mBackgroundColor[0] = r;
@@ -371,8 +367,8 @@ void TextLineShader::setSize (const float *size) noexcept
 
 void TextLineShader::setSize (float width, float height) noexcept
 {
-  if (   almostEqual (width , mSize[0])
-      && almostEqual (height, mSize[1]))
+  if (   Utils::almostEqual (width , mSize[0])
+      && Utils::almostEqual (height, mSize[1]))
     return;
 
   mSize[0] = width;
@@ -384,28 +380,26 @@ void TextLineShader::setSize (float width, float height) noexcept
 void TextLineShader::setModelViewProjectionMatrix (const float *matrix) noexcept
 {
 
-  if (   almostEqual (matrix[0 ], mModelViewProjectionMatrix[0 ])
-      && almostEqual (matrix[1 ], mModelViewProjectionMatrix[1 ])
-      && almostEqual (matrix[2 ], mModelViewProjectionMatrix[2 ])
-      && almostEqual (matrix[3 ], mModelViewProjectionMatrix[3 ])
-      && almostEqual (matrix[4 ], mModelViewProjectionMatrix[4 ])
-      && almostEqual (matrix[5 ], mModelViewProjectionMatrix[5 ])
-      && almostEqual (matrix[6 ], mModelViewProjectionMatrix[6 ])
-      && almostEqual (matrix[7 ], mModelViewProjectionMatrix[7 ])
-      && almostEqual (matrix[8 ], mModelViewProjectionMatrix[8 ])
-      && almostEqual (matrix[9 ], mModelViewProjectionMatrix[9 ])
-      && almostEqual (matrix[10], mModelViewProjectionMatrix[10])
-      && almostEqual (matrix[11], mModelViewProjectionMatrix[11])
-      && almostEqual (matrix[12], mModelViewProjectionMatrix[12])
-      && almostEqual (matrix[13], mModelViewProjectionMatrix[13])
-      && almostEqual (matrix[14], mModelViewProjectionMatrix[14])
-      && almostEqual (matrix[15], mModelViewProjectionMatrix[15]))
+  if (   Utils::almostEqual (matrix[0 ], mModelViewProjectionMatrix[0 ])
+      && Utils::almostEqual (matrix[1 ], mModelViewProjectionMatrix[1 ])
+      && Utils::almostEqual (matrix[2 ], mModelViewProjectionMatrix[2 ])
+      && Utils::almostEqual (matrix[3 ], mModelViewProjectionMatrix[3 ])
+      && Utils::almostEqual (matrix[4 ], mModelViewProjectionMatrix[4 ])
+      && Utils::almostEqual (matrix[5 ], mModelViewProjectionMatrix[5 ])
+      && Utils::almostEqual (matrix[6 ], mModelViewProjectionMatrix[6 ])
+      && Utils::almostEqual (matrix[7 ], mModelViewProjectionMatrix[7 ])
+      && Utils::almostEqual (matrix[8 ], mModelViewProjectionMatrix[8 ])
+      && Utils::almostEqual (matrix[9 ], mModelViewProjectionMatrix[9 ])
+      && Utils::almostEqual (matrix[10], mModelViewProjectionMatrix[10])
+      && Utils::almostEqual (matrix[11], mModelViewProjectionMatrix[11])
+      && Utils::almostEqual (matrix[12], mModelViewProjectionMatrix[12])
+      && Utils::almostEqual (matrix[13], mModelViewProjectionMatrix[13])
+      && Utils::almostEqual (matrix[14], mModelViewProjectionMatrix[14])
+      && Utils::almostEqual (matrix[15], mModelViewProjectionMatrix[15]))
     return;
 
   memcpy (mModelViewProjectionMatrix, matrix, 16 * sizeof (float));
 
   glUniformMatrix4fv (mUniformModelViewProjectionMatrixLoc, 1, GL_FALSE, mModelViewProjectionMatrix);
-}
-}
 }
 }

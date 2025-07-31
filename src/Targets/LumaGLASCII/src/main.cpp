@@ -1,11 +1,12 @@
-#include "GLASCII/v150/Debug/TextBoxShader.h"
-#include "GLASCII/v150/Debug/TextLineShader.h"
 #include "Luma/Core/Application.h"
 #include "Luma/Core/KeyEvent.h"
 #include "Luma/Core/ScrollEvent.h"
 #include "Luma/Core/Window.h"
 #include "Luma/GL/Buffer.h"
 #include "Luma/GL/VertexArray.h"
+#include "Shader/ASCII/Debug/Common.h"
+#include "Shader/ASCII/Debug/v150/TextBoxShader.h"
+#include "Shader/ASCII/Debug/v150/TextLineShader.h"
 #include <GL/glew.h>
 #include <stdexcept>
 
@@ -17,8 +18,8 @@ constexpr int TableHeight = 32;
 
 class MainWindow : public Luma::Core::Window
 {
-  GLASCII::v150::Debug::TextBoxShader mTextBoxShader;
-  GLASCII::v150::Debug::TextLineShader mTextLineShader;
+  Shader::ASCII::Debug::v150::TextBoxShader mTextBoxShader;
+  Shader::ASCII::Debug::v150::TextLineShader mTextLineShader;
 
   Luma::GL::VertexArray mTextBoxVAO;
   Luma::GL::Buffer mTextBoxVBO;
@@ -134,8 +135,8 @@ public:
     glViewport (0, 0, frameBufferSize[0], frameBufferSize[1]);
     glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    Luma::Geom::Vec2F glyphSize = {GLASCII::v150::Debug::glyphTextureWidth (),
-                                   GLASCII::v150::Debug::glyphTextureHeight ()};
+    Luma::Geom::Vec2F glyphSize = {Shader::ASCII::Debug::glyphTextureWidth (),
+                                   Shader::ASCII::Debug::glyphTextureHeight ()};
     {
       float scale = mScalePercent / 100.f;
       Luma::Geom::Vec2F scaledGlyphSize = glyphSize * scale;

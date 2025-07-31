@@ -1,13 +1,14 @@
 #include "GL/glew.h"
-#include "GLASCII/v150/Debug/TextBoxShader.h"
-#include "GLASCII/v150/Debug/TextLineShader.h"
 #include "Luma/Core/KeyEvent.h"
 #include "Luma/Core/MouseEvent.h"
 #include "Luma/Core/RenderEvent.h"
 #include "Luma/Core/Window.h"
 #include "Luma/GL/Buffer.h"
-#include "Luma/GL/VertexArray.h"
 #include "Luma/GL/ShaderProgram.h"
+#include "Luma/GL/VertexArray.h"
+#include "Shader/ASCII/Debug/v150/TextBoxShader.h"
+#include "Shader/ASCII/Debug/v150/TextLineShader.h"
+#include "Shader/Triangle/v150/TriangleShader.h"
 
 class TerminalImpl
 {
@@ -29,9 +30,9 @@ private:
 
   bool mInited = false;
 
-  GLASCII::v150::Debug::TextBoxShader mTextBoxShader;
-  GLASCII::v150::Debug::TextLineShader mTextLineShader;
-  Luma::GL::ShaderProgram mFillShader;
+  Shader::ASCII::Debug::v150::TextBoxShader mTextBoxShader;
+  Shader::ASCII::Debug::v150::TextLineShader mTextLineShader;
+  Shader::Triangle::v150::TriangleShader mTriangleShader;
 
   Luma::GL::VertexArray mTextBoxVAO;
   Luma::GL::Buffer mTextBoxVBO;
@@ -88,61 +89,7 @@ void TerminalImpl::init ()
 
   mTextBoxShader.create ();
   mTextLineShader.create ();
-
-  {
-    Luma::GL::Shader vertexShader (Luma::GL::Shader::Type::Vertex);
-    Luma::GL::Shader geometryShader (Luma::GL::Shader::Type::Geometry);
-    Luma::GL::Shader fragmentShader (Luma::GL::Shader::Type::Fragment);
-
-    vertexShader.create ();
-    vertexShader.compileSource (R"(#version 130
-
-                                        void main ()
-                                        {
-                                          gl_Position = glVertex;
-                                        })");
-
-    geometryShader.create ();
-    geometryShader.compileSource (R"(#version 150
-
-                                     layout (lines_adjacency) in;
-                                     layout (triangle_strip, max_vertices = 4) out;
-
-                                     void emitVertex (in int i);
-
-                                     void main()
-                                     {
-                                       emitVertex (0);
-                                       emitVertex (1);
-                                       emitVertex (3);
-                                       emitVertex (2);
-                                       EndPrimitive ();
-                                     }
-
-                                     void emitVertex (in int i)
-                                     {
-                                       gl_Position = vec4 (gl_in[i].gl_Position);
-                                       EmitVertex ();
-                                     })");
-
-    fragmentShader.create ();
-    fragmentShader.compileSource (R"(#version 130
-
-                                     uniform vec4 u_color;
-
-                                     out vec4 FragColor;
-
-                                     void main()
-                                     {
-                                       FragColor = u_color;
-                                     })");
-
-    mFillShader.create ();
-    mFillShader.attach (vertexShader.id ());
-    mFillShader.attach (geometryShader.id ());
-    mFillShader.attach (fragmentShader.id ());
-    mFillShader.link ();
-  }
+  mTriangleShader.create ();
 }
 
 

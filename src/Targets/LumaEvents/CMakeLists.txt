@@ -12,5 +12,5 @@ add_executable(LumaEvents src/main.cpp)
 target_link_libraries(LumaEvents
                       PRIVATE LibLuma_Core
                       PRIVATE LibLuma_GL
-                      PRIVATE LibGLASCII
+                      PRIVATE LibShader_ASCII
                       PRIVATE libglew_static)

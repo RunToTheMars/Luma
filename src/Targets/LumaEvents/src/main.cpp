@@ -1,9 +1,10 @@
-#include "GLASCII/v150/Debug/TextLineShader.h"
-#include "Luma/GL/Buffer.h"
 #include "Luma/Core/Application.h"
 #include "Luma/Core/KeyEvent.h"
 #include "Luma/Core/Monitor.h"
 #include "Luma/Core/Window.h"
+#include "Luma/GL/Buffer.h"
+#include "Shader/ASCII/Debug/Common.h"
+#include "Shader/ASCII/Debug/v150/TextLineShader.h"
 #include <GL/glew.h>
 #include <chrono>
 #include <memory>
@@ -130,8 +131,8 @@ private:
         mTextLineShader.setPosition (0.f, 0.f, 0.f);
         mTextLineShader.setColor (0.f, 1.f, 0.f, 1.f);
         mTextLineShader.setBackgroundColor (0.f, 0.f, 0.f, 0.f);
-        mTextLineShader.setSize (GLASCII::v150::Debug::glyphTextureWidth (),
-                                 GLASCII::v150::Debug::glyphTextureHeight ());
+        mTextLineShader.setSize (Shader::ASCII::Debug::glyphTextureWidth (),
+                                 Shader::ASCII::Debug::glyphTextureHeight ());
 
         mTextLineShader.unbind ();
 
@@ -221,7 +222,7 @@ private:
 
   bool mIsInited = false;
 
-  GLASCII::v150::Debug::TextLineShader mTextLineShader;
+  Shader::ASCII::Debug::v150::TextLineShader mTextLineShader;
   Luma::GL::Buffer mTextVBO;
 
   std::chrono::steady_clock::time_point mStartTime;

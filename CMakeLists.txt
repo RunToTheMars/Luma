@@ -9,13 +9,8 @@ set(CMAKE_CXX_STANDARD 20)          # Версия стандарта С++
 set(CMAKE_CXX_STANDARD_REQUIRED ON) # Обязательно ли использовать именно этот стандарт, или можно выше.
 
 add_subdirectory(src/glew)
-add_subdirectory(src/GLASCII)
-
-add_subdirectory(src/Luma/RaiiUtils)
-add_subdirectory(src/Luma/Geom)
-add_subdirectory(src/Luma/Signal)
-add_subdirectory(src/Luma/Core)
-add_subdirectory(src/Luma/GL)
+add_subdirectory(src/Shader)
+add_subdirectory(src/Luma)
 
 #add_subdirectory(src/Targets/HelloWindowFPS)
 #add_subdirectory(src/Targets/HelloTriangle)
