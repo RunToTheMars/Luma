@@ -2,6 +2,7 @@
 #include "ApplicationImpl.h"
 #include "ImplCast.inl"
 #include "Luma/Core/Application.h"
+#include "Luma/Core/CharEvent.h"
 #include "Luma/Core/HoverEvent.h"
 #include "Luma/Core/KeyEvent.h"
 #include "Luma/Core/Monitor.h"
@@ -112,14 +113,20 @@ public:
   static void WindowKeyEventHandle (GLFWwindow *window, int key, int scancode, int action, int mods)
   {
     Window *GLwindow = toGLwindow (glfwGetWindowUserPointer (window));
-    notifyInputEvent (GLwindow, [&] { GLwindow->keyEvent (KeyEvent (static_cast<Key> (key), static_cast<KeyAction> (action))); });
+    notifyInputEvent (GLwindow, [&] { GLwindow->keyEvent (KeyEvent (static_cast<KeyEvent::Key> (key), static_cast<KeyEvent::Action> (action), static_cast<KeyEvent::Mode> (mods))); });
+  }
+
+  static void WindowCharEventHandle (GLFWwindow *window, unsigned int codepoint)
+  {
+    Window *GLwindow = toGLwindow (glfwGetWindowUserPointer (window));
+    notifyInputEvent (GLwindow, [&] { GLwindow->charEvent (CharEvent (codepoint)); });
   }
 
   static void WindowMouseButtonEventHandle (GLFWwindow *window, int button, int action, int mods)
   {
     Window *GLwindow = toGLwindow (glfwGetWindowUserPointer (window));
     notifyInputEvent (GLwindow, [&] {
-      GLwindow->mouseEvent (MouseEvent (static_cast<MouseButton> (button), static_cast<MouseButtonAction> (action)));
+      GLwindow->mouseEvent (MouseEvent (static_cast<MouseEvent::Button> (button), static_cast<MouseEvent::Action> (action)));
     });
   }
 
@@ -209,6 +216,7 @@ GLFWwindow *createWindowImpl (Luma::Core::Window *window, const Luma::Core::Vec2
   glfwSetFramebufferSizeCallback    (impl, &Luma::Core::WindowEventDispatcher::WindowFramebufferSizeChangedHandle);
   glfwSetWindowContentScaleCallback (impl, &Luma::Core::WindowEventDispatcher::WindowContentScaleChangedHandle);
   glfwSetKeyCallback                (impl, &Luma::Core::WindowEventDispatcher::WindowKeyEventHandle);
+  glfwSetCharCallback               (impl, &Luma::Core::WindowEventDispatcher::WindowCharEventHandle);
   glfwSetMouseButtonCallback        (impl, &Luma::Core::WindowEventDispatcher::WindowMouseButtonEventHandle);
   glfwSetScrollCallback             (impl, &Luma::Core::WindowEventDispatcher::WindowScrollEventHandle);
   glfwSetCursorPosCallback          (impl, &Luma::Core::WindowEventDispatcher::WindowCursorPosChangedHandle);
@@ -550,14 +558,14 @@ Vec2I Window::frameBufferSize () const
   return mFrameBufferSize;
 }
 
-RectI Window::frameRect () const
+UiRectI Window::frameUiRect () const
 {
   int left;
   int top;
   int right;
   int bottom;
   glfwGetWindowFrameSize (toGLFWwindow (mPimpl), &left, &top, &right, &bottom);
-  return RectI {Vec2I {left, top}, Vec2I {right - left + 1, bottom - top + 1}};
+  return UiRectI {Vec2I {left, top}, Vec2I {right - left + 1, bottom - top + 1}};
 }
 
 Vec2F Window::contentScale () const
@@ -779,6 +787,16 @@ void Window::setCursorPos (const Vec2D &pos)
   glfwSetCursorPos (toGLFWwindow (mPimpl), pos[0], pos[1]);
 }
 
+const char *Window::clipboard () const
+{
+  return glfwGetClipboardString (toGLFWwindow (mPimpl));
+}
+
+void Window::setClipboard (const char *data)
+{
+  return glfwSetClipboardString (toGLFWwindow (mPimpl), data);
+}
+
 void Window::closeEvent ()
 {
   destroy ();
@@ -809,6 +827,10 @@ void Window::resizeEvent (const ResizeEvent &)
 }
 
 void Window::keyEvent (const KeyEvent &)
+{
+}
+
+void Window::charEvent (const CharEvent &)
 {
 }
 

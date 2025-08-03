@@ -7,8 +7,8 @@ class Buffer
 public:
   enum class Type
   {
-    Vertex = 0x8892, // GL_ARRAY_BUFFER
-    Index  = 0x8893  // GL_ELEMENT_ARRAY_BUFFER
+    Vertex  = 0x8892, // GL_ARRAY_BUFFER
+    Element = 0x8893  // GL_ELEMENT_ARRAY_BUFFER
   };
 
   enum class UsagePattern

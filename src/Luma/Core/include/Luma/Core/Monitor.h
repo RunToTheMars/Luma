@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Luma/Core/Object.h"
-#include "Luma/Geom/Rect.h"
+#include "Luma/Geom/UiRect.h"
 #include "Luma/Geom/Vector.h"
 
 namespace Luma::Core
@@ -21,7 +21,7 @@ public:
   ~Monitor ();
 
   Vec2I pos () const;
-  RectI workRect () const;
+  UiRectI workRect () const;
   Vec2I physicalSize () const;
   Vec2F contentScale () const;
   const char *name () const;

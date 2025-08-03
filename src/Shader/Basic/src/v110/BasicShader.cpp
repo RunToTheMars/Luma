@@ -1,37 +1,29 @@
-#include "Shader/Triangle/v150/TriangleShader.h"
+#include "Shader/Basic/v110/BasicShader.h"
 #include "Shader/Utils.h"
 #include <GL/glew.h>
 #include <cstring>
 #include <math.h>
 #include <stddef.h>
 
-namespace
+namespace Shader::Basic::v110
 {
-bool almostEqual (float a, float b, float eps = 1e-6)
-{
-  return std::fabs (a - b) < eps;
-}
-}
-
-namespace Shader::Triangle::v150
-{
-TriangleShader::TriangleShader () noexcept
+BasicShader::BasicShader () noexcept
 {
 }
 
-TriangleShader::~TriangleShader () noexcept
+BasicShader::~BasicShader () noexcept
 {
   destroy ();
 }
 
-void TriangleShader::create () noexcept
+void BasicShader::create () noexcept
 {
-  const char *vertexShaderSource = R"(#version 150
+  const char *vertexShaderSource = R"(#version 110
 
-                                      in vec4 aPosition;
-                                      in vec4 aColor;
+                                      attribute vec4 aPosition;
+                                      attribute vec4 aColor;
 
-                                      smooth out vec4 fColor;
+                                      varying vec4 fColor;
 
                                       uniform mat4 uModelViewProjectionMatrix;
 
@@ -42,33 +34,17 @@ void TriangleShader::create () noexcept
                                       }
                                     )";
 
-  const char *fragmentShaderSource = R"(#version 130
-                                     smooth in vec4 fColor;
+  const char *fragmentShaderSource = R"(#version 110
+
+                                     varying vec4 fColor;
 
                                      void main()
                                      {
-                                         fragColor = fColor;
+                                         gl_FragColor = fColor;
                                      }
                                     )";
 
-  int vertexShaderId = glCreateShader (GL_VERTEX_SHADER);
-  int fragmentShaderId = glCreateShader (GL_FRAGMENT_SHADER);
-
-  glShaderSource (vertexShaderId, 1, &vertexShaderSource, NULL);
-  glCompileShader (vertexShaderId);
-
-  glShaderSource (fragmentShaderId, 1, &fragmentShaderSource, NULL);
-  glCompileShader (fragmentShaderId);
-
-  mProgramId = glCreateProgram ();
-
-  glAttachShader (mProgramId, vertexShaderId);
-  glAttachShader (mProgramId, fragmentShaderId);
-
-  glLinkProgram (mProgramId);
-
-  glDeleteShader (vertexShaderId);
-  glDeleteShader (fragmentShaderId);
+  mProgramId = Shader::Utils::createProgram (vertexShaderSource, nullptr, fragmentShaderSource, "Geometry");
 
   mUniformModelViewProjectionMatrixLoc = glGetUniformLocation (mProgramId, "uModelViewProjectionMatrix");
 
@@ -83,12 +59,12 @@ void TriangleShader::create () noexcept
     }
 }
 
-bool TriangleShader::isCreated () const noexcept
+bool BasicShader::isCreated () const noexcept
 {
   return mProgramId;
 }
 
-void TriangleShader::destroy () noexcept
+void BasicShader::destroy () noexcept
 {
   if (isCreated ())
     {
@@ -97,32 +73,32 @@ void TriangleShader::destroy () noexcept
     }
 }
 
-const float *TriangleShader::modelViewProjectionMatrix () const noexcept
+const float *BasicShader::modelViewProjectionMatrix () const noexcept
 {
   return mModelViewProjectionMatrix;
 }
 
-int TriangleShader::positionAttributeLocation () const
+int BasicShader::positionAttributeLocation () const
 {
   return mPositionAttributeLoc;
 }
 
-int TriangleShader::colorAttributeLocation () const
+int BasicShader::colorAttributeLocation () const
 {
   return mColorAttributeLoc;
 }
 
-void TriangleShader::bind ()
+void BasicShader::bind ()
 {
   glUseProgram (mProgramId);
 }
 
-void TriangleShader::unbind ()
+void BasicShader::unbind ()
 {
   glUseProgram (0);
 }
 
-void TriangleShader::setModelViewProjectionMatrix (const float *matrix) noexcept
+void BasicShader::setModelViewProjectionMatrix (const float *matrix) noexcept
 {
 
   if (   Utils::almostEqual (matrix[0 ], mModelViewProjectionMatrix[0 ])

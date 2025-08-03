@@ -3,7 +3,11 @@
 #include "Luma/Geom/Vector.h"
 
 namespace Luma::Core {
-enum class MouseButton {
+class MouseEvent
+{
+public:
+
+enum class Button {
   BUTTON_1 = 0,             /* GLFW_MOUSE_BUTTON_1      */
   BUTTON_2 = 1,             /* GLFW_MOUSE_BUTTON_2      */
   BUTTON_3 = 2,             /* GLFW_MOUSE_BUTTON_3      */
@@ -19,22 +23,19 @@ enum class MouseButton {
   BUTTON_CENTER = BUTTON_3, /* GLFW_MOUSE_BUTTON_MIDDLE */
 };
 
-enum class MouseButtonAction {
+enum class Action {
   Press   = 1, /* GLFW_PRESS   */
   Release = 0, /* GLFW_RELEASE */
 };
 
-class MouseEvent
-{
-public:
-  MouseEvent (MouseButton button, MouseButtonAction action) : mButton (button), mAction (action) {}
+  MouseEvent (Button button, Action action) : mButton (button), mAction (action) {}
   ~MouseEvent () = default;
 
-  const MouseButton button () const { return mButton; }
-  const MouseButtonAction action () const { return mAction; }
+  const Button button () const { return mButton; }
+  const Action action () const { return mAction; }
 
 private:
-  MouseButton mButton;
-  MouseButtonAction mAction;
+  Button mButton;
+  Action mAction;
 };
-} // namespace GL
+} // namespace Luma::Core

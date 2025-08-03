@@ -2,6 +2,7 @@
 
 #include "Luma/Core/Object.h"
 #include "Luma/Geom/Rect.h"
+#include "Luma/Geom/UiRect.h"
 #include "Luma/Geom/Vector.h"
 #include <optional>
 
@@ -10,6 +11,7 @@ namespace Luma::Core
 using namespace Luma::Geom;
 
 class KeyEvent;
+class CharEvent;
 class HoverEvent;
 class MouseEvent;
 class ResizeEvent;
@@ -124,7 +126,7 @@ public:
 
   Vec2I frameBufferSize () const;
 
-  RectI frameRect () const;
+  UiRectI frameUiRect () const;
 
   Vec2F contentScale () const;
 
@@ -198,6 +200,9 @@ public:
   Vec2D cursorPos () const;
   void setCursorPos (const Vec2D &pos);
 
+  const char *clipboard () const;
+  void setClipboard (const char *data);
+
 protected:
   /// Events
   virtual void closeEvent    ();
@@ -208,6 +213,7 @@ protected:
   virtual void resizeEvent   (const ResizeEvent &);
   virtual void hoverEvent    (const HoverEvent &);
   virtual void keyEvent      (const KeyEvent &);
+  virtual void charEvent     (const CharEvent &);
   virtual void mouseEvent    (const MouseEvent &);
   virtual void scrollEvent   (const ScrollEvent &);
   virtual void enterEvent    ();

@@ -37,10 +37,10 @@ public:
 private:
   void keyEvent (const Luma::Core::KeyEvent &event) override
   {
-    if (event.key () == Luma::Core::Key::Key_Escape && event.action () == Luma::Core::KeyAction::Press)
+    if (event.key () == Luma::Core::KeyEvent::Key::Key_Escape && event.action () == Luma::Core::KeyEvent::Action::Press)
       return destroy ();
 
-    if (event.key () == Luma::Core::Key::Key_F10 && event.action () == Luma::Core::KeyAction::Press)
+    if (event.key () == Luma::Core::KeyEvent::Key::Key_F10 && event.action () == Luma::Core::KeyEvent::Action::Press)
       {
         if (isWindowed ())
           {
@@ -51,7 +51,7 @@ private:
           }
       }
 
-    if (event.key () == Luma::Core::Key::Key_F11 && event.action () == Luma::Core::KeyAction::Press)
+    if (event.key () == Luma::Core::KeyEvent::Key::Key_F11 && event.action () == Luma::Core::KeyEvent::Action::Press)
       {
         if (isWindowed ())
           setMonitor (Luma::Core::Application::primaryMonitor ());
@@ -60,12 +60,12 @@ private:
       }
 
 
-    if (event.key () == Luma::Core::Key::Key_F5 && event.action () == Luma::Core::KeyAction::Press)
+    if (event.key () == Luma::Core::KeyEvent::Key::Key_F5 && event.action () == Luma::Core::KeyEvent::Action::Press)
       {
         update ();
       }
 
-    if (event.key () == Luma::Core::Key::Key_I && event.action () == Luma::Core::KeyAction::Press)
+    if (event.key () == Luma::Core::KeyEvent::Key::Key_I && event.action () == Luma::Core::KeyEvent::Action::Press)
       {
         if (!isIconified ())
           {
@@ -77,7 +77,7 @@ private:
           }
       }
 
-    if (event.key () == Luma::Core::Key::Key_M && event.action () == Luma::Core::KeyAction::Press)
+    if (event.key () == Luma::Core::KeyEvent::Key::Key_M && event.action () == Luma::Core::KeyEvent::Action::Press)
       {
         if (!isMaximized ())
           {
@@ -90,12 +90,12 @@ private:
       }
 
 
-    if (event.key () == Luma::Core::Key::Key_A && event.action () == Luma::Core::KeyAction::Press)
+    if (event.key () == Luma::Core::KeyEvent::Key::Key_A && event.action () == Luma::Core::KeyEvent::Action::Press)
       {
         requestAttention ();
       }
 
-    if (event.key () == Luma::Core::Key::Key_W && event.action () == Luma::Core::KeyAction::Press)
+    if (event.key () == Luma::Core::KeyEvent::Key::Key_W && event.action () == Luma::Core::KeyEvent::Action::Press)
       {
         if (mSubWindow)
           {
@@ -106,7 +106,7 @@ private:
           mSubWindow = new CustomWindow (false, this);
       }
 
-    if (event.key () == Luma::Core::Key::Key_G && event.action () == Luma::Core::KeyAction::Press)
+    if (event.key () == Luma::Core::KeyEvent::Key::Key_G && event.action () == Luma::Core::KeyEvent::Action::Press)
       {
         if (mSubWindow)
           {

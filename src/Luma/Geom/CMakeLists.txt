@@ -9,7 +9,9 @@ set(CMAKE_CXX_STANDARD 20)          # Версия стандарта С++
 set(CMAKE_CXX_STANDARD_REQUIRED ON) # Обязательно ли использовать именно этот стандарт, или можно выше.
 
 add_library (LibLuma_Geom
-             src/Empty.cpp)
+             src/Empty.cpp
+             include/Luma/Geom/UiRect.h
+             include/Luma/Geom/UiRect_fwd.h)
 
 target_include_directories(LibLuma_Geom PUBLIC include)
 

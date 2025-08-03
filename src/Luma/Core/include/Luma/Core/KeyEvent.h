@@ -2,13 +2,19 @@
 
 namespace Luma::Core
 {
-enum class KeyAction {
+class KeyEvent
+{
+public:
+
+enum class Action
+{
   Press   = 1, /* GLFW_PRESS   */
   Repeat  = 2, /* GLFW_REPEAT  */
   Release = 0, /* GLFW_RELEASE */
 };
 
-enum class Key {
+enum class Key
+{
   Key_Space             = 32,                     /* GLFW_KEY_SPACE         */
   Key_Apostrophe        = 39,      /* ' */        /* GLFW_KEY_APOSTROPHE    */
   Key_Comma             = 44,      /* , */        /* GLFW_KEY_COMMA         */
@@ -114,17 +120,26 @@ enum class Key {
   Key_KeyPad_9          = 329,                    /* GLFW_KEY_KP_9         */
 };
 
-class KeyEvent
+enum Mode
 {
-public:
-  KeyEvent (Key key, KeyAction action) : mKey (key), mAction (action) {}
+  Shift    = 0x0001, /* GLFW_MOD_SHIFT     */
+  Ctrl     = 0x0002, /* GLFW_MOD_CONTROL   */
+  Alt      = 0x0004, /* GLFW_MOD_ALT       */
+  Super    = 0x0008, /* GLFW_MOD_SUPER     */
+  CapsLock = 0x0010, /* GLFW_MOD_CAPS_LOCK */
+  NumLock  = 0x0020  /* GLFW_MOD_NUM_LOCK  */
+};
+
+  KeyEvent (Key key, Action action, Mode mode) : mKey (key), mAction (action), mMode (mode) {}
   ~KeyEvent () = default;
 
   const Key key () const { return mKey; }
-  const KeyAction action () const { return mAction; }
+  const Action action () const { return mAction; }
+  const Mode mode () const { return mMode; }
 
 private:
   const Key mKey;
-  const KeyAction mAction;
+  const Action mAction;
+  const Mode mMode;
 };
 }

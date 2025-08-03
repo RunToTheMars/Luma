@@ -1,17 +1,17 @@
 #pragma once
 
-namespace Shader::Triangle::v150
+namespace Shader::Basic::v110
 {
-class TriangleShader
+class BasicShader
 {
 public:
-  TriangleShader () noexcept;
-  TriangleShader (const TriangleShader &) = delete;
-  TriangleShader (TriangleShader &&) = delete;
-  ~TriangleShader () noexcept;
+  BasicShader () noexcept;
+  BasicShader (const BasicShader &) = delete;
+  BasicShader (BasicShader &&) = delete;
+  ~BasicShader () noexcept;
 
-  TriangleShader &operator= (const TriangleShader &) = delete;
-  TriangleShader &operator= (TriangleShader &&) = delete;
+  BasicShader &operator= (const BasicShader &) = delete;
+  BasicShader &operator= (BasicShader &&) = delete;
 
   /// \note This function call bind and unbind
   void create () noexcept;
@@ -47,4 +47,4 @@ private:
                                           0.f, 0.f, 1.f, 0.f,
                                           0.f, 0.f, 0.f, 1.f};
 };
-}  // namespace GLASCII::v150::Debug
+}  // namespace Shader::Basic::v110

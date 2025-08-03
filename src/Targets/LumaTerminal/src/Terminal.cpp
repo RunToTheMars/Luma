@@ -17,6 +17,11 @@ void Terminal::keyEvent (const Luma::Core::KeyEvent &event)
   mPimpl->keyEvent (event);
 }
 
+void Terminal::charEvent (const Luma::Core::CharEvent &event)
+{
+  mPimpl->charEvent (event);
+}
+
 void Terminal::mouseEvent (const Luma::Core::MouseEvent &event)
 {
   mPimpl->mouseEvent (event);

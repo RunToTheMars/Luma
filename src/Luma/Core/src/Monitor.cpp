@@ -20,9 +20,9 @@ Vec2I Monitor::pos () const
   return pos;
 }
 
-RectI Monitor::workRect () const
+UiRectI Monitor::workRect () const
 {
-  RectI workRect;
+  UiRectI workRect;
   glfwGetMonitorWorkarea (toGLFWmonitor (mPimpl),
                           &workRect.leftTop[0],
                           &workRect.leftTop[1],

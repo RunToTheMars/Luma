@@ -12,3 +12,6 @@ add_library (LibShader_Utils STATIC
              src/Utils.cpp)
 
 target_include_directories(LibShader_Utils PUBLIC include)
+
+target_link_libraries(LibShader_Utils
+                      PRIVATE libglew_static)

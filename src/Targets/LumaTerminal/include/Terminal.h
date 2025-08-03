@@ -12,6 +12,7 @@ public:
 
   void renderEvent (const Luma::Core::RenderEvent &event) override;
   void keyEvent (const Luma::Core::KeyEvent &event) override;
+  void charEvent (const Luma::Core::CharEvent &event) override;
   void mouseEvent (const Luma::Core::MouseEvent &event) override;
   void focusInEvent () override;
   void focusOutEvent () override;

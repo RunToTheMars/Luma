@@ -10,4 +10,4 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON) # Обязательно ли использ
 
 add_subdirectory(Utils)
 add_subdirectory(ASCII)
-add_subdirectory(Triangle)
+add_subdirectory(Basic)

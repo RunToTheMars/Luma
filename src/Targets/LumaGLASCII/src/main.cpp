@@ -181,15 +181,15 @@ public:
 
   void keyEvent (const Luma::Core::KeyEvent &event) override
   {
-    if (event.key () == Luma::Core::Key::Key_Escape && event.action () == Luma::Core::KeyAction::Press)
+    if (event.key () == Luma::Core::KeyEvent::Key::Key_Escape && event.action () == Luma::Core::KeyEvent::Action::Press)
       destroy ();
 
-    if (event.key () == Luma::Core::Key::Key_Up && (event.action () == Luma::Core::KeyAction::Press || event.action () == Luma::Core::KeyAction::Repeat))
+    if (event.key () == Luma::Core::KeyEvent::Key::Key_Up && (event.action () == Luma::Core::KeyEvent::Action::Press || event.action () == Luma::Core::KeyEvent::Action::Repeat))
       {
         addScale (true);
       }
 
-    if (event.key () == Luma::Core::Key::Key_Down && (event.action () == Luma::Core::KeyAction::Press || event.action () == Luma::Core::KeyAction::Repeat))
+    if (event.key () == Luma::Core::KeyEvent::Key::Key_Down && (event.action () == Luma::Core::KeyEvent::Action::Press || event.action () == Luma::Core::KeyEvent::Action::Repeat))
       {
         addScale (false);
       }
