@@ -12,6 +12,7 @@ class Application;
 class Monitor;
 class MonitorList;
 class Window;
+class WindowImpl;
 class VideoMode;
 class VideoModeList;
 
@@ -35,6 +36,7 @@ private:
   friend class Luma::Core::Application;
   friend class Luma::Core::MonitorList;
   friend class Luma::Core::Window;
+  friend class Luma::Core::WindowImpl;
 
   Monitor (void *impl);
 

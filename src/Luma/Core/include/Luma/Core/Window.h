@@ -1,9 +1,10 @@
 #pragma once
 
 #include "Luma/Core/Object.h"
-#include "Luma/Geom/Rect.h"
-#include "Luma/Geom/UiRect.h"
+#include "Luma/Geom/Rect_fwd.h"
+#include "Luma/Geom/UiRect_fwd.h"
 #include "Luma/Geom/Vector.h"
+#include <memory>
 #include <optional>
 
 namespace Luma::Core
@@ -64,8 +65,14 @@ struct WindowHints
   int stencilBits = 8;  /* GLFW_FOCUSED */
 };
 
+class WindowImpl;
+
 class Window: public Object
 {
+  friend class Luma::Core::WindowEventDispatcher;
+  friend class Luma::Core::Application;
+  friend class Luma::Core::WindowImpl;
+
 public:
   enum class Modality
   {
@@ -221,40 +228,8 @@ protected:
   virtual void scaleEvent    (const ScaleEvent &);
 
 private:
-  friend class Luma::Core::Application;
-  friend class Luma::Core::WindowEventDispatcher;
+  void appRenderEvent ();
 
-  void *mPimpl = nullptr;
-
-  Vec2I mPos;
-  Vec2I mSize;
-  Vec2I mFrameBufferSize;
-  Vec2F mContentScale;
-  Vec2D mCursorPos;
-  Profile mProfile;
-  int mContextVersionMajor;
-  int mContextVersionMinor;
-  bool mResizable;
-  bool mVisible;
-  bool mDecorated;
-  bool mFocused;
-  bool mHovered;
-  bool mIconified;
-  bool mAutoIconify;
-  bool mFloating;
-  bool mMaximized;
-  bool mFocusOnShow;
-  bool mMousePassthrough;
-  bool mDoublebuffer;
-  bool mTransparentFrameBuffer;
-  std::optional<Vec2I> mMinSize;
-  std::optional<Vec2I> mMaxSize;
-  std::optional<Vec2I> mAspectRatio;
-  float mOpacity;
-
-  bool mUpdateNeeded = false;
-  RectI mUpdateRect;
-
-  Modality mModality = Modality::NonModal;
+  std::unique_ptr<WindowImpl> mPimpl;
 };
-}  // namespace GL
+}  // namespace Luma::Core

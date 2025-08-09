@@ -48,13 +48,7 @@ int Application::exec ()
       std::swap (ApplicationImpl::windowsForCurrRepaint, ApplicationImpl::windowsForPostRepaint);
 
       for (Window *window : *ApplicationImpl::windowsForCurrRepaint)
-        {
-          if (!window->isVisible () || window->isIconified ())
-            continue;
-
-          window->mUpdateNeeded = false;
-          window->repaint (window->mUpdateRect);
-        }
+        window->appRenderEvent ();
 
       ApplicationImpl::windowsForCurrRepaint->clear ();
 

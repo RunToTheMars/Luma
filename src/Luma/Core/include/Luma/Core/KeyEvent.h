@@ -2,16 +2,6 @@
 
 namespace Luma::Core
 {
-class KeyEvent
-{
-public:
-
-enum class Action
-{
-  Press   = 1, /* GLFW_PRESS   */
-  Repeat  = 2, /* GLFW_REPEAT  */
-  Release = 0, /* GLFW_RELEASE */
-};
 
 enum class Key
 {
@@ -118,6 +108,16 @@ enum class Key
   Key_KeyPad_7          = 327,                    /* GLFW_KEY_KP_7         */
   Key_KeyPad_8          = 328,                    /* GLFW_KEY_KP_8         */
   Key_KeyPad_9          = 329,                    /* GLFW_KEY_KP_9         */
+};
+
+class KeyEvent
+{
+public:
+enum class Action
+{
+  Press   = 1, /* GLFW_PRESS   */
+  Repeat  = 2, /* GLFW_REPEAT  */
+  Release = 0, /* GLFW_RELEASE */
 };
 
 enum Mode

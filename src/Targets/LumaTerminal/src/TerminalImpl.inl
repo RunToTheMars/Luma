@@ -274,11 +274,11 @@ void TerminalImpl::renderInputPos (const Luma::Core::Vec2I &viewSize)
 
 void TerminalImpl::keyEvent (const Luma::Core::KeyEvent &event)
 {
-  if (   event.key () == Luma::Core::KeyEvent::Key::Key_Escape
+  if (   event.key () == Luma::Core::Key::Key_Escape
       && event.action () == Luma::Core::KeyEvent::Action::Press)
     mWindow.destroy ();
 
-  if (   event.key () == Luma::Core::KeyEvent::Key::Key_F11
+  if (   event.key () == Luma::Core::Key::Key_F11
       && event.action () == Luma::Core::KeyEvent::Action::Press)
     {
       if (mWindow.isWindowed ())
@@ -291,7 +291,7 @@ void TerminalImpl::keyEvent (const Luma::Core::KeyEvent &event)
         }
     }
 
-  if (   event.key () == Luma::Core::KeyEvent::Key::Key_F11
+  if (   event.key () == Luma::Core::Key::Key_F11
       && event.action () == Luma::Core::KeyEvent::Action::Press)
     {
       if (mWindow.isWindowed ())
@@ -304,19 +304,19 @@ void TerminalImpl::keyEvent (const Luma::Core::KeyEvent &event)
         }
     }
 
-  if (   event.key () == Luma::Core::KeyEvent::Key::Key_Home
+  if (   event.key () == Luma::Core::Key::Key_Home
       && (event.action () == Luma::Core::KeyEvent::Action::Press))
     {
       moveInputPosHandle (0);
     }
 
-  if (   event.key () == Luma::Core::KeyEvent::Key::Key_End
+  if (   event.key () == Luma::Core::Key::Key_End
       && (event.action () == Luma::Core::KeyEvent::Action::Press))
     {
       moveInputPosHandle (std::ssize (mUserInputText));
     }
 
-  if (event.key () == Luma::Core::KeyEvent::Key::Key_Left)
+  if (event.key () == Luma::Core::Key::Key_Left)
     {
       if (event.action () == Luma::Core::KeyEvent::Action::Press)
         {
@@ -335,7 +335,7 @@ void TerminalImpl::keyEvent (const Luma::Core::KeyEvent &event)
         }
     }
 
-  if (   event.key () == Luma::Core::KeyEvent::Key::Key_Right)
+  if (   event.key () == Luma::Core::Key::Key_Right)
     {
       if (event.action () == Luma::Core::KeyEvent::Action::Press)
         {
@@ -354,7 +354,7 @@ void TerminalImpl::keyEvent (const Luma::Core::KeyEvent &event)
         }
     }
 
-  if (   event.key () == Luma::Core::KeyEvent::Key::Key_BackSpace
+  if (   event.key () == Luma::Core::Key::Key_BackSpace
       && (event.action () == Luma::Core::KeyEvent::Action::Press || event.action () == Luma::Core::KeyEvent::Action::Repeat))
     {
       if (event.action () == Luma::Core::KeyEvent::Action::Press)
@@ -374,7 +374,7 @@ void TerminalImpl::keyEvent (const Luma::Core::KeyEvent &event)
         }
     }
 
-  if (   event.key () == Luma::Core::KeyEvent::Key::Key_Delete
+  if (   event.key () == Luma::Core::Key::Key_Delete
       && (event.action () == Luma::Core::KeyEvent::Action::Press || event.action () == Luma::Core::KeyEvent::Action::Repeat))
     {
       if (event.action () == Luma::Core::KeyEvent::Action::Press)
@@ -394,7 +394,7 @@ void TerminalImpl::keyEvent (const Luma::Core::KeyEvent &event)
         }
     }
 
-  if (   event.key () == Luma::Core::KeyEvent::Key::Key_V
+  if (   event.key () == Luma::Core::Key::Key_V
       && event.mode () & Luma::Core::KeyEvent::Mode::Ctrl
       && (event.action () == Luma::Core::KeyEvent::Action::Press || event.action () == Luma::Core::KeyEvent::Action::Repeat))
     {
