@@ -471,6 +471,11 @@ void Window::scaleEvent (const ScaleEvent &event)
   mPimpl->scaleEvent (event);
 }
 
+void Window::monitorDisconnectEvent ()
+{
+  mPimpl->monitorDisconnectEvent ();
+}
+
 void Window::appRenderEvent ()
 {
   mPimpl->appRenderEvent ();

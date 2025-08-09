@@ -166,12 +166,14 @@ public:
   void enterEvent    ();
   void leaveEvent    ();
   void scaleEvent    (const ScaleEvent &);
+  void monitorDisconnectEvent ();
 
   void appRenderEvent ();
 
 private:
   Window &mWindow;
   GLFWwindow *mPimpl = nullptr;
+  GLFWmonitor *mMonitorPimpl = nullptr;
 
   Vec2I mPos;
   Vec2I mSize;
@@ -575,8 +577,7 @@ void WindowImpl::setModality (Window::Modality modality)
 
 bool WindowImpl::isWindowed () const
 {
-  GLFWmonitor *monitorImpl = glfwGetWindowMonitor (mPimpl);
-  return monitorImpl == nullptr;
+  return !mMonitorPimpl;
 }
 
 bool WindowImpl::isFullScreen () const
@@ -586,18 +587,19 @@ bool WindowImpl::isFullScreen () const
 
 Monitor WindowImpl::monitor () const
 {
-  GLFWmonitor *monitorImpl = glfwGetWindowMonitor (mPimpl);
-  return Monitor (monitorImpl);
+  return Monitor (mMonitorPimpl);
 }
 
 void WindowImpl::setMonitor (const Monitor &monitor, const Vec2I &resolution, std::optional<int> refreshRate)
 {
-  glfwSetWindowMonitor (mPimpl, static_cast<GLFWmonitor*> (monitor.mPimpl), 0, 0, resolution[0], resolution[1], refreshRate.value_or (GL_DONT_CARE));
+  mMonitorPimpl = static_cast<GLFWmonitor *> (monitor.mPimpl);
+  glfwSetWindowMonitor (mPimpl, mMonitorPimpl, 0, 0, resolution[0], resolution[1], refreshRate.value_or (GL_DONT_CARE));
 }
 
 void WindowImpl::setMonitor (const Monitor &monitor, const VideoMode &videoMode)
 {
-  glfwSetWindowMonitor (mPimpl, static_cast<GLFWmonitor*> (monitor.mPimpl), 0, 0, videoMode.width (), videoMode.height (), videoMode.refreshRate ());
+  mMonitorPimpl = static_cast<GLFWmonitor *> (monitor.mPimpl);
+  glfwSetWindowMonitor (mPimpl, mMonitorPimpl, 0, 0, videoMode.width (), videoMode.height (), videoMode.refreshRate ());
 }
 
 void WindowImpl::setMonitor (const Monitor &monitor)
@@ -607,7 +609,8 @@ void WindowImpl::setMonitor (const Monitor &monitor)
 
 void WindowImpl::setWindowed (const Vec2I &pos, const Vec2I &size)
 {
-  glfwSetWindowMonitor (mPimpl, nullptr, pos[0], pos[1], size[0], size[1], GL_DONT_CARE);
+  mMonitorPimpl = nullptr;
+  glfwSetWindowMonitor (mPimpl, mMonitorPimpl, pos[0], pos[1], size[0], size[1], GL_DONT_CARE);
 }
 
 const char *WindowImpl::title () const
@@ -995,6 +998,11 @@ void WindowImpl::leaveEvent ()
 
 void WindowImpl::scaleEvent (const ScaleEvent &)
 {
+}
+
+void WindowImpl::monitorDisconnectEvent ()
+{
+  mMonitorPimpl = nullptr;
 }
 
 void WindowImpl::appRenderEvent ()

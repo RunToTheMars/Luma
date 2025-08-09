@@ -226,6 +226,7 @@ protected:
   virtual void enterEvent    ();
   virtual void leaveEvent    ();
   virtual void scaleEvent    (const ScaleEvent &);
+  virtual void monitorDisconnectEvent ();
 
 private:
   void appRenderEvent ();
